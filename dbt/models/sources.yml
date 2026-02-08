@@ -1,0 +1,77 @@
+﻿version: 2
+
+sources:
+  - name: nola
+    schema: public
+    description: Operational schema from the local Postgres database.
+    tables:
+      - name: sales
+        loaded_at_field: created_at
+        freshness:
+          warn_after: {count: 2, period: day}
+          error_after: {count: 7, period: day}
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: store_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('nola', 'stores')
+                  field: id
+          - name: channel_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('nola', 'channels')
+                  field: id
+          - name: created_at
+            tests:
+              - not_null
+          - name: sale_status_desc
+            tests:
+              - not_null
+      - name: product_sales
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: sale_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('nola', 'sales')
+                  field: id
+          - name: product_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('nola', 'products')
+                  field: id
+      - name: stores
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+      - name: channels
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+      - name: products
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+      - name: categories
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique

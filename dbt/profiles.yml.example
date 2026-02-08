@@ -1,0 +1,14 @@
+﻿nola_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DB_HOST', 'localhost') }}"
+      user: "{{ env_var('DB_USER', 'nextage') }}"
+      password: "{{ env_var('DB_PASSWORD', 'alan_zoka') }}"
+      port: "{{ env_var('DB_PORT', 5432) | int }}"
+      dbname: "{{ env_var('DB_NAME', 'nextage_db') }}"
+      schema: "{{ env_var('DBT_SCHEMA', 'analytics_dbt') }}"
+      threads: 1
+      keepalives_idle: 0
+      connect_timeout: 10

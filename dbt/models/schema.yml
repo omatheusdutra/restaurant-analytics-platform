@@ -1,0 +1,67 @@
+﻿version: 2
+
+models:
+  - name: stg_sales
+    columns:
+      - name: sale_id
+        tests:
+          - not_null
+          - unique
+      - name: created_at
+        tests:
+          - not_null
+      - name: store_id
+        tests:
+          - not_null
+      - name: channel_id
+        tests:
+          - not_null
+  - name: stg_product_sales
+    columns:
+      - name: product_sale_id
+        tests:
+          - not_null
+          - unique
+      - name: sale_id
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+  - name: fct_sales
+    columns:
+      - name: sale_id
+        tests:
+          - not_null
+          - unique
+      - name: sale_date
+        tests:
+          - not_null
+  - name: fct_product_sales
+    columns:
+      - name: product_sale_id
+        tests:
+          - not_null
+          - unique
+      - name: sale_date
+        tests:
+          - not_null
+  - name: mart_sales_daily
+    columns:
+      - name: sale_date
+        tests:
+          - not_null
+      - name: orders_total
+        tests:
+          - not_null
+      - name: orders
+        tests:
+          - not_null
+      - name: orders_cancelled
+        tests:
+          - not_null
+  - name: mart_product_daily
+    columns:
+      - name: sale_date
+        tests:
+          - not_null
