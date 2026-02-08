@@ -1,0 +1,156 @@
+{
+  "datasets": [
+    {
+      "name": "public.sales",
+      "description": "Order-level sales records.",
+      "columns": [
+        {"name": "id", "type": "int"},
+        {"name": "created_at", "type": "timestamp"},
+        {"name": "store_id", "type": "int"},
+        {"name": "channel_id", "type": "int"},
+        {"name": "sale_status_desc", "type": "text"},
+        {"name": "total_amount", "type": "numeric"}
+      ]
+    },
+    {
+      "name": "public.product_sales",
+      "description": "Line items per sale.",
+      "columns": [
+        {"name": "id", "type": "int"},
+        {"name": "sale_id", "type": "int"},
+        {"name": "product_id", "type": "int"},
+        {"name": "quantity", "type": "float"},
+        {"name": "total_price", "type": "float"}
+      ]
+    },
+    {
+      "name": "public.products",
+      "description": "Product catalog.",
+      "columns": [
+        {"name": "id", "type": "int"},
+        {"name": "name", "type": "text"},
+        {"name": "category_id", "type": "int"},
+        {"name": "cost_price", "type": "numeric"}
+      ]
+    },
+    {
+      "name": "public.channels",
+      "description": "Sales channels and commission.",
+      "columns": [
+        {"name": "id", "type": "int"},
+        {"name": "name", "type": "text"},
+        {"name": "type", "type": "char"},
+        {"name": "commission_pct", "type": "float"}
+      ]
+    },
+    {
+      "name": "public.stores",
+      "description": "Stores / locations.",
+      "columns": [
+        {"name": "id", "type": "int"},
+        {"name": "name", "type": "text"},
+        {"name": "city", "type": "text"},
+        {"name": "state", "type": "text"}
+      ]
+    },
+    {
+      "name": "analytics.mart_sales_daily",
+      "description": "Daily sales aggregates (views).",
+      "columns": [
+        {"name": "sale_date", "type": "date"},
+        {"name": "store_id", "type": "int"},
+        {"name": "channel_id", "type": "int"},
+        {"name": "orders_total", "type": "bigint"},
+        {"name": "orders", "type": "bigint"},
+        {"name": "orders_cancelled", "type": "bigint"},
+        {"name": "revenue", "type": "numeric"},
+        {"name": "gross_revenue", "type": "numeric"},
+        {"name": "avg_ticket", "type": "numeric"},
+        {"name": "total_discount", "type": "numeric"},
+        {"name": "discount_rate", "type": "numeric"},
+        {"name": "cancellation_rate", "type": "numeric"},
+        {"name": "avg_production_seconds", "type": "numeric"},
+        {"name": "avg_delivery_seconds", "type": "numeric"}
+      ]
+    },
+    {
+      "name": "analytics.mart_product_daily",
+      "description": "Daily product aggregates (views).",
+      "columns": [
+        {"name": "sale_date", "type": "date"},
+        {"name": "store_id", "type": "int"},
+        {"name": "channel_id", "type": "int"},
+        {"name": "product_id", "type": "int"},
+        {"name": "units", "type": "float"},
+        {"name": "revenue", "type": "float"},
+        {"name": "avg_unit_price", "type": "float"}
+      ]
+    },
+    {
+      "name": "analytics.dim_customer_public",
+      "description": "PII-safe customer dimension (views).",
+      "columns": [
+        {"name": "customer_id", "type": "int"},
+        {"name": "customer_name", "type": "text"},
+        {"name": "gender", "type": "text"},
+        {"name": "store_id", "type": "int"}
+      ]
+    },
+    {
+      "name": "analytics_dbt.fct_sales",
+      "description": "Fact table for sales.",
+      "columns": [
+        {"name": "sale_id", "type": "int"},
+        {"name": "sale_date", "type": "date"},
+        {"name": "store_id", "type": "int"},
+        {"name": "channel_id", "type": "int"},
+        {"name": "total_amount", "type": "numeric"}
+      ]
+    },
+    {
+      "name": "analytics_dbt.fct_product_sales",
+      "description": "Fact table for product-level sales.",
+      "columns": [
+        {"name": "product_sale_id", "type": "int"},
+        {"name": "sale_date", "type": "date"},
+        {"name": "store_id", "type": "int"},
+        {"name": "channel_id", "type": "int"},
+        {"name": "product_id", "type": "int"},
+        {"name": "total_price", "type": "float"}
+      ]
+    },
+    {
+      "name": "analytics_dbt.mart_sales_daily",
+      "description": "Daily sales aggregates.",
+      "columns": [
+        {"name": "sale_date", "type": "date"},
+        {"name": "store_id", "type": "int"},
+        {"name": "channel_id", "type": "int"},
+        {"name": "orders_total", "type": "bigint"},
+        {"name": "orders", "type": "bigint"},
+        {"name": "orders_cancelled", "type": "bigint"},
+        {"name": "revenue", "type": "numeric"},
+        {"name": "gross_revenue", "type": "numeric"},
+        {"name": "avg_ticket", "type": "numeric"},
+        {"name": "total_discount", "type": "numeric"},
+        {"name": "discount_rate", "type": "numeric"},
+        {"name": "cancellation_rate", "type": "numeric"},
+        {"name": "avg_production_seconds", "type": "numeric"},
+        {"name": "avg_delivery_seconds", "type": "numeric"}
+      ]
+    },
+    {
+      "name": "analytics_dbt.mart_product_daily",
+      "description": "Daily product aggregates.",
+      "columns": [
+        {"name": "sale_date", "type": "date"},
+        {"name": "store_id", "type": "int"},
+        {"name": "channel_id", "type": "int"},
+        {"name": "product_id", "type": "int"},
+        {"name": "units", "type": "float"},
+        {"name": "revenue", "type": "float"},
+        {"name": "avg_unit_price", "type": "float"}
+      ]
+    }
+  ]
+}

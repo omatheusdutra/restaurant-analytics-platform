@@ -1,0 +1,25 @@
+﻿name: nola_analytics
+version: '1.0.0'
+config-version: 2
+
+profile: nola_analytics
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analysis"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  nola_analytics:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: view
+
+flags:
+  send_anonymous_usage_stats: false
