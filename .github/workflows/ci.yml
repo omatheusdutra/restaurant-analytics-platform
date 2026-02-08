@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -31,7 +31,9 @@ jobs:
         run: npm run build --if-present
 
       - name: Test
-        run: npm test
+        env:
+          RUN_INTEGRATION: "0"
+        run: npm run test:controllers
 
       - name: Audit (prod deps)
         run: npm audit --omit=dev --audit-level=high

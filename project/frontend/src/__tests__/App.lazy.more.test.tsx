@@ -29,7 +29,6 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Import App after mocks are set up
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const App = (await import('@/App')).default;
 
 describe('App lazy routes extra', () => {

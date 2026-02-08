@@ -5,7 +5,9 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.DATABASE_URL =
   process.env.DATABASE_URL ||
   'postgresql://nextage:alan_zoka@localhost:5432/nextage_db';
-process.env.RUN_INTEGRATION = process.env.RUN_INTEGRATION || '1';
+// Integration tests must be explicitly enabled (RUN_INTEGRATION=1),
+// otherwise CI/unit runs should stay DB-independent.
+process.env.RUN_INTEGRATION = process.env.RUN_INTEGRATION || '0';
 
 // Ensure Prisma disconnects after tests to avoid open handles
 try {

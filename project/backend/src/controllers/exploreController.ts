@@ -1,4 +1,4 @@
-﻿import { Request, Response } from "express";
+import { Request, Response } from "express";
 import prisma from "../config/database";
 import { Prisma } from "@prisma/client";
 
@@ -208,19 +208,6 @@ export const runExploreQuery = async (req: Request, res: Response) => {
       limitSql = Prisma.sql`LIMIT ${topNum}`;
     }
 
-    const countRows: Array<{ total: bigint | number }> = await prisma.$queryRaw(Prisma.sql`
-      SELECT COUNT(*)::bigint AS total
-      FROM (
-        SELECT 1
-        FROM ${Prisma.raw(joins.join(" "))}
-        ${whereSql}
-        GROUP BY ${Prisma.raw(groupBy.join(", "))}
-      ) grouped
-    `);
-
-    const rawTotal = Number(normalizeBigInt(countRows[0]?.total ?? 0));
-    const total = topNum !== null ? Math.min(rawTotal, topNum) : rawTotal;
-
     let pageNum = DEFAULT_PAGE;
     let pageSizeNum = DEFAULT_PAGE_SIZE;
     let offset = 0;
@@ -235,6 +222,19 @@ export const runExploreQuery = async (req: Request, res: Response) => {
       }
       offset = (pageNum - 1) * pageSizeNum;
     }
+
+    const countRows: Array<{ total: bigint | number }> = await prisma.$queryRaw(Prisma.sql`
+      SELECT COUNT(*)::bigint AS total
+      FROM (
+        SELECT 1
+        FROM ${Prisma.raw(joins.join(" "))}
+        ${whereSql}
+        GROUP BY ${Prisma.raw(groupBy.join(", "))}
+      ) grouped
+    `);
+
+    const rawTotal = Number(normalizeBigInt(countRows[0]?.total ?? 0));
+    const total = topNum !== null ? Math.min(rawTotal, topNum) : rawTotal;
 
     let rows: any[] = [];
     if (topNum !== null && !isCsv) {
