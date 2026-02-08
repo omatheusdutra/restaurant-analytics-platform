@@ -1,0 +1,82 @@
+﻿name: nextage-god-level-analytics
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: nextage-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nextage_db}
+      POSTGRES_USER: ${POSTGRES_USER:-nextage}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-alan_zoka}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./project/db/database-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextage -d nextage_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  data-generator:
+    build:
+      context: ./tools/data-generator
+      dockerfile: Dockerfile
+    container_name: nextage-god-level-analytics-data-generator-run
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database URL used by the generator (defaults to local postgres service)
+      GEN_DB_URL: ${GEN_DB_URL:-postgresql://nextage:alan_zoka@postgres:5432/nextage_db}
+      # Optional flags to control generation (leave unset to use defaults)
+      # GEN_STORES: "50"
+      # GEN_PRODUCTS: "540"
+      # GEN_ITEMS: "200"
+      # GEN_CUSTOMERS: "10000"
+      # GEN_MONTHS: "7"
+      # Advanced behavior toggles
+      # GEN_MONTHLY_GROWTH: "0.025"        # e.g., 0.025 for 2.5%/mÃªs
+      # GEN_GROWTH_STORE_ID: "12"          # loja que cresce +5%/mÃªs
+      # GEN_SEASONAL_MONTHS: "1,7"         # meses com boost sazonal (+80%)
+      # GEN_SEASONAL_PRODUCTS: "20"        # quantidade de produtos sazonais
+      # GEN_SEED: "123"                    # reprodutibilidade
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        sleep 5 &&
+        echo 'Generating challenge data with configurable flags...' &&
+        ARGS="" && \
+        [ -n \"$$GEN_STORES\" ] && ARGS=\"$$ARGS --stores $$GEN_STORES\"; \
+        [ -n \"$$GEN_PRODUCTS\" ] && ARGS=\"$$ARGS --products $$GEN_PRODUCTS\"; \
+        [ -n \"$$GEN_ITEMS\" ] && ARGS=\"$$ARGS --items $$GEN_ITEMS\"; \
+        [ -n \"$$GEN_CUSTOMERS\" ] && ARGS=\"$$ARGS --customers $$GEN_CUSTOMERS\"; \
+        [ -n \"$$GEN_MONTHS\" ] && ARGS=\"$$ARGS --months $$GEN_MONTHS\"; \
+        [ -n \"$$GEN_MONTHLY_GROWTH\" ] && ARGS=\"$$ARGS --monthly-growth $$GEN_MONTHLY_GROWTH\"; \
+        [ -n \"$$GEN_GROWTH_STORE_ID\" ] && ARGS=\"$$ARGS --growth-store-id $$GEN_GROWTH_STORE_ID\"; \
+        [ -n \"$$GEN_SEASONAL_MONTHS\" ] && ARGS=\"$$ARGS --seasonal-months $$GEN_SEASONAL_MONTHS\"; \
+        [ -n \"$$GEN_SEASONAL_PRODUCTS\" ] && ARGS=\"$$ARGS --seasonal-products $$GEN_SEASONAL_PRODUCTS\"; \
+        [ -n \"$$GEN_SEED\" ] && ARGS=\"$$ARGS --seed $$GEN_SEED\"; \
+        python generate_data.py --db-url $$GEN_DB_URL $$ARGS 
+      "
+    profiles:
+      - tools
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nextage-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@godlevel.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
