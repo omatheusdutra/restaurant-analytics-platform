@@ -51,7 +51,7 @@ describe('Layout additional branches', () => {
     const toggle = screen.getByRole('button', { name: /Open menu/i });
     fireEvent.click(toggle);
     // navigate to dashboard item
-    const goDash = screen.getByRole('menuitem', { name: /Início/i });
+    const goDash = screen.getByRole('menuitem', { name: /In[ií]cio/i });
     fireEvent.click(goDash);
     // reopen and export PDF
     fireEvent.click(toggle);
