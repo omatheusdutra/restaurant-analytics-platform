@@ -8,7 +8,6 @@ import { useFilterStore } from "@/store/filterStore";
 import {
   apiClient,
   MetricsOverview,
-  TopProduct,
   ChannelSales,
   TimeSeriesData,
   Insight,
@@ -72,7 +71,6 @@ export const DashboardPage: React.FC = () => {
   const location = useLocation();
 
   const [overview, setOverview] = useState<MetricsOverview | null>(null);
-  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [channels, setChannels] = useState<ChannelSales[]>([]);
   const [timeSeries, setTimeSeries] = useState<TimeSeriesData[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -95,8 +93,6 @@ export const DashboardPage: React.FC = () => {
   const formatPercent = (v: number) => `${(v * 100).toFixed(1)}%`;
   const QUALITY_WARN_AT = Number(import.meta.env.VITE_QUALITY_WARN_AT || 1);
   const QUALITY_TREND_DAYS = Number(import.meta.env.VITE_QUALITY_TREND_DAYS || 7);
-  const qualityStatus = (value: number, warnAt = QUALITY_WARN_AT) =>
-    value >= warnAt ? "Alerta" : "OK";
 
   const qualityBadge = (value: number, warnAt = QUALITY_WARN_AT) => (
     <span
@@ -122,10 +118,9 @@ export const DashboardPage: React.FC = () => {
     queryKey: ["dashboard", debouncedParams],
     queryFn: async () => {
       const params = debouncedParams;
-      const [overviewData, productsData, channelsData, timeSeriesData, insightsData, qualityData, qualityTrend] =
+      const [overviewData, channelsData, timeSeriesData, insightsData, qualityData, qualityTrend] =
         await Promise.all([
           apiClient.getOverview(params),
-          apiClient.getTopProducts({ ...params, limit: "10" }),
           apiClient.getSalesByChannel(params),
           apiClient.getTimeSeries({ ...params, groupBy: "day" }),
           apiClient.getInsights(params),
@@ -133,7 +128,6 @@ export const DashboardPage: React.FC = () => {
           apiClient.getDataQualityTrend(QUALITY_TREND_DAYS),
         ]);
       setOverview(overviewData);
-      setTopProducts(productsData);
       setChannels(channelsData);
       setTimeSeries(timeSeriesData);
       setInsights(insightsData.insights);
@@ -481,5 +475,4 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
-
 
