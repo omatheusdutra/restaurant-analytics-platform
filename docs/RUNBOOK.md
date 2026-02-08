@@ -70,9 +70,12 @@ Build the dbt models into `analytics_dbt`:
 - cd dbt
 - pip install -r requirements.txt
 - cp profiles.yml.example profiles.yml
+- dbt clean
+- dbt deps
 - dbt debug --profiles-dir .
 - dbt run --profiles-dir .
 - dbt test --profiles-dir .
+Profile: `nextage_analytics`.
 Note (Windows): if you see a `syntax error at or near "﻿with"` in dbt models, remove UTF-8 BOM from `dbt/models/**/*.sql`.
 
 ### Convenience Scripts
@@ -105,3 +108,4 @@ Note (Windows): if you see a `syntax error at or near "﻿with"` in dbt models, 
 ## Logs
 - API logs are written to stdout using pino.
 - Use docker logs for Postgres: docker logs nextage-db
+

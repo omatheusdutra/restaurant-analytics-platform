@@ -1,10 +1,7 @@
 import request from 'supertest';
 import app from '../index';
 
-const runIntegration = process.env.RUN_INTEGRATION === '1';
-const maybeDescribe = runIntegration ? describe : describe.skip;
-
-maybeDescribe('Metrics Endpoints', () => {
+describe('Metrics Endpoints', () => {
   let token: string;
 
   beforeAll(async () => {
@@ -31,3 +28,5 @@ maybeDescribe('Metrics Endpoints', () => {
     }
   });
 });
+
+

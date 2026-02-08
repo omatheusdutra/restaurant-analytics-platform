@@ -1,5 +1,5 @@
 with source as (
-  select * from {{ source('nola', 'categories') }}
+  select * from {{ source('nextage', 'categories') }}
 )
 
 select

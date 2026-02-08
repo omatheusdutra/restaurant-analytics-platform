@@ -1,10 +1,7 @@
 import request from "supertest";
 import app from "../index";
 
-const runIntegration = process.env.RUN_INTEGRATION === '1';
-const maybeDescribe = runIntegration ? describe : describe.skip;
-
-maybeDescribe("Auth Controller", () => {
+describe("Auth Controller", () => {
   describe("POST /api/auth/register", () => {
     it("should register a new user successfully", async () => {
       const response = await request(app)
@@ -145,3 +142,5 @@ maybeDescribe("Auth Controller", () => {
     });
   });
 });
+
+

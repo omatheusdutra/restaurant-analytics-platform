@@ -29,7 +29,9 @@
 - [Guia Rápido Completo](#quickstart-completo)
 - [Scripts Principais](#scripts-principais)
 - [Testes](#testes)
+- [dbt (Opcional)](#dbt-opcional)
 - [Validação Completa](#validação-completa)
+- [Healthcheck Rápido](#healthcheck-rápido)
 - [Variáveis de Ambiente](#variáveis-de-ambiente)
 - [Endpoints da API](#api-endpoints)
 - [Segurança e Qualidade](#segurança-e-qualidade)
@@ -232,8 +234,8 @@ Por padrao, o script abre dois processos:
 | --- | --- |
 | `project/backend/npm run db:reset` | Reset DB, aplicar schema Prisma e gerar dados |
 | `scripts/start_all.ps1` | Setup backend/frontend e start dos 2 servidores |
-| `scripts/start_after_db_reset.ps1` | Setup sem start automatico |
 | `scripts/validate_all.ps1` | Validacao E2E (SQL + testes + API checks) |
+| `scripts/healthcheck.ps1` | Check rapido de Docker/Postgres/API/Frontend (com status PASS/FAIL) |
 | `scripts/test_api.py` | Smoke test simples de API |
 | `scripts/dbt.ps1` / `scripts/dbt.sh` | Comandos dbt (opcional) |
 
@@ -290,6 +292,30 @@ cd ../..
 ```
 
 ---
+
+## 🔶 dbt (Opcional)
+
+Comandos recomendados (na pasta `dbt`):
+
+```powershell
+cd dbt
+pip install -r requirements.txt
+Copy-Item profiles.yml.example profiles.yml
+
+# limpeza e dependências
+dbt clean
+dbt deps
+
+# validação e execução
+dbt debug --profiles-dir .
+dbt run --profiles-dir .
+dbt test --profiles-dir .
+```
+
+Observação:
+- O profile do projeto é `nextage_analytics`.
+
+---
 ## 🧪 Validação Completa
 
 Rodar da raiz:
@@ -317,6 +343,31 @@ O script executa:
 
 ---
 
+## 🩺 Healthcheck Rápido
+
+Use para validar rapidamente se o ambiente está operacional:
+
+```powershell
+.\scripts\healthcheck.ps1
+```
+
+Opções comuns:
+
+```powershell
+# ignorar check do frontend
+.\scripts\healthcheck.ps1 -CheckFrontend:$false
+
+# incluir testes backend/frontend
+.\scripts\healthcheck.ps1 -RunBackendTests -RunFrontendTests
+```
+
+Comportamento esperado:
+
+- Saída em tabela com `PASS` / `FAIL` por verificação.
+- `exit code 0` quando tudo passar.
+- `exit code 1` quando houver falha (ex.: Docker daemon sem permissão).
+
+---
 ## ⚙️ Variáveis de Ambiente
 
 ### Raiz (`.env`)
@@ -449,11 +500,4 @@ Botao `Inicio` invalida cache de dashboard. Se necessário, force refresh (`Ctrl
 ## 📄 License
 
 MIT
-
-
-
-
-
-
-
 

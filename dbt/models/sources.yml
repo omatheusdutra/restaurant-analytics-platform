@@ -1,7 +1,7 @@
 ﻿version: 2
 
 sources:
-  - name: nola
+  - name: nextage
     schema: public
     description: Operational schema from the local Postgres database.
     tables:
@@ -19,14 +19,16 @@ sources:
             tests:
               - not_null
               - relationships:
-                  to: source('nola', 'stores')
-                  field: id
+                  arguments:
+                    to: source('nextage', 'stores')
+                    field: id
           - name: channel_id
             tests:
               - not_null
               - relationships:
-                  to: source('nola', 'channels')
-                  field: id
+                  arguments:
+                    to: source('nextage', 'channels')
+                    field: id
           - name: created_at
             tests:
               - not_null
@@ -43,14 +45,16 @@ sources:
             tests:
               - not_null
               - relationships:
-                  to: source('nola', 'sales')
-                  field: id
+                  arguments:
+                    to: source('nextage', 'sales')
+                    field: id
           - name: product_id
             tests:
               - not_null
               - relationships:
-                  to: source('nola', 'products')
-                  field: id
+                  arguments:
+                    to: source('nextage', 'products')
+                    field: id
       - name: stores
         columns:
           - name: id

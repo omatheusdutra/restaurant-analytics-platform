@@ -10,6 +10,25 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://nextage:alan_zoka@localhost:5432/nextage_db
+      JWT_SECRET: test-secret
+      CORS_ORIGIN: http://localhost:3000
+      NODE_ENV: test
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: nextage_db
+          POSTGRES_USER: nextage
+          POSTGRES_PASSWORD: alan_zoka
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nextage -d nextage_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: project/backend
@@ -24,16 +43,31 @@ jobs:
           cache: npm
           cache-dependency-path: project/backend/package-lock.json
 
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U nextage -d nextage_db && exit 0
+            sleep 2
+          done
+          echo "Postgres did not become ready in time"
+          exit 1
+
       - name: Install
         run: npm ci
+
+      - name: Prepare Prisma schema
+        run: |
+          npx prisma generate
+          npx prisma db push --accept-data-loss
 
       - name: Build (typecheck)
         run: npm run build --if-present
 
       - name: Test
-        env:
-          RUN_INTEGRATION: "0"
-        run: npm run test:controllers
+        run: npm test
 
       - name: Audit (prod deps)
         run: npm audit --omit=dev --audit-level=high

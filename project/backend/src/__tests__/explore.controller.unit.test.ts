@@ -1,5 +1,6 @@
 ﻿import { runExploreQuery } from '@/controllers/exploreController';
 import prisma from '@/config/database';
+import { Prisma } from '@prisma/client';
 
 jest.mock('@/config/database', () => ({
   __esModule: true,
@@ -311,4 +312,233 @@ describe('exploreController unit', () => {
     expect(res2.status).toHaveBeenCalledWith(400);
     expect(res2.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'invalid pageSize' }));
   });
+  it('rejects invalid startDate', async () => {
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day', startDate: 'not-a-date' },
+      query: {},
+    } as any, res as any);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'invalid startDate' }));
+  });
+
+  it('rejects invalid endDate', async () => {
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day', endDate: 'also-not-a-date' },
+      query: {},
+    } as any, res as any);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'invalid endDate' }));
+  });
+
+  it('normalizes Prisma.Decimal values in rows', async () => {
+    const decimalValue = new Prisma.Decimal('12.34');
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-01-01T00:00:00Z'), revenue: decimalValue }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rows: expect.arrayContaining([expect.objectContaining({ revenue: 12.34 })]),
+      })
+    );
+  });
+
+  it('normalizes decimal-like objects using toNumber/toString fallback', async () => {
+    class DecimalLike {
+      toNumber() {
+        return Number.POSITIVE_INFINITY;
+      }
+      toString() {
+        return '999999999999999999.99';
+      }
+    }
+
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-01-01T00:00:00Z'), revenue: new DecimalLike() }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rows: expect.arrayContaining([expect.objectContaining({ revenue: '999999999999999999.99' })]),
+      })
+    );
+  });
+  it('normalizes unsafe bigint totals (non safe integer branch)', async () => {
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt('9007199254740993') }])
+      .mockResolvedValueOnce([]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        total: 9007199254740992,
+      })
+    );
+  });
+
+  it('normalizes Prisma.Decimal non-finite values using toString fallback', async () => {
+    const hugeDecimal = new Prisma.Decimal('1e9999');
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-01-01T00:00:00Z'), revenue: hugeDecimal }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    const payload = (res.json as jest.Mock).mock.calls[0][0];
+    expect(typeof payload.rows[0].revenue).toBe('string');
+  });
+
+  it('does not treat non-decimal classes as decimal-like', async () => {
+    class NumberLike {
+      toNumber() {
+        return 7;
+      }
+      toString() {
+        return '7';
+      }
+    }
+
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-01-01T00:00:00Z'), revenue: new NumberLike() }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    const payload = (res.json as jest.Mock).mock.calls[0][0];
+    expect(payload.rows[0].revenue).toEqual({});
+  });
+  it('handles decimal-like object with missing constructor name', async () => {
+    const decimalLikeNoCtor = {
+      constructor: undefined,
+      toNumber: () => 55,
+      toString: () => '55',
+    };
+
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-01-01T00:00:00Z'), revenue: decimalLikeNoCtor }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    const payload = (res.json as jest.Mock).mock.calls[0][0];
+    expect(payload.rows[0].revenue).toEqual(expect.objectContaining({ constructor: undefined }));
+  });
+
+  it('normalizes decimal-like classes with finite toNumber', async () => {
+    class DecimalFinite {
+      toNumber() {
+        return 42;
+      }
+      toString() {
+        return '42';
+      }
+    }
+
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-01-01T00:00:00Z'), revenue: new DecimalFinite() }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rows: expect.arrayContaining([expect.objectContaining({ revenue: 42 })]),
+      })
+    );
+  });
+
+  it('handles empty array id lists and keeps query running', async () => {
+    mockCountAndRows([]);
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day', storeIds: [] },
+      query: {},
+    } as any, res as any);
+    expect((prisma as any).$queryRaw).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rows: [] }));
+  });
+
+  it('handles empty count result using nullish fallback', async () => {
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day' },
+      query: {},
+    } as any, res as any);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        total: 0,
+        rows: [],
+      })
+    );
+  });
+
+  it('covers CSV null fallbacks for dim and measure values', async () => {
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-05-01T00:00:00Z'), dim: null }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day', dimension: 'channel' },
+      query: { format: 'csv' },
+    } as any, res as any);
+
+    const csv = (res.send as jest.Mock).mock.calls[0][0] as string;
+    expect(csv).toContain('""');
+    expect(csv).toContain(',0');
+  });
 });
+
+
