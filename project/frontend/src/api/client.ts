@@ -1,4 +1,4 @@
-﻿// Base da API sem sufixo /api; os endpoints ja incluem "/api/..."
+// Base da API sem sufixo /api; os endpoints ja incluem "/api/..."
 /* c8 ignore next */
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -341,8 +341,8 @@ class ApiClient {
     return this.request<Dashboard>(`/api/dashboards/shared/${shareToken}`);
   }
 
-  async getDataQualitySummary(): Promise<DataQualitySummary> {
-    return this.request<DataQualitySummary>("/api/metrics/data-quality");
+  async getDataQualitySummary(days = 7): Promise<DataQualitySummary> {
+    return this.request<DataQualitySummary>(`/api/metrics/data-quality?days=${days}`);
   }
 
   async getDataQualityTrend(days = 7): Promise<DataQualityTrendPoint[]> {
@@ -365,6 +365,11 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
+
+
+
+
 
 
 

@@ -817,19 +817,26 @@ export const exportToCSV = async (req: Request, res: Response) => {
 
 export const getDataQualitySummary = async (req: Request, res: Response) => {
   try {
+    const parsedDays = Number.parseInt(String(req.query?.days ?? "7"), 10);
+    const days = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 7;
     const rows: any[] = await prisma.$queryRaw`
+      WITH recent_sales AS (
+        SELECT *
+        FROM sales s
+        WHERE s.created_at::date BETWEEN (CURRENT_DATE - (${String(days)} || ' days')::interval)::date AND CURRENT_DATE
+      )
       SELECT
-        (SELECT COUNT(*) FROM sales) AS total_sales_audited,
-        (SELECT COUNT(*) FROM product_sales) AS total_items_audited,
-        (SELECT COUNT(*) FROM customers) AS total_customers_audited,
-        (SELECT COUNT(*) FROM sales WHERE store_id IS NULL) AS sales_missing_store,
-        (SELECT COUNT(*) FROM sales WHERE channel_id IS NULL) AS sales_missing_channel,
-        (SELECT COUNT(*) FROM sales WHERE created_at IS NULL) AS sales_missing_created_at,
-        (SELECT COUNT(*) FROM sales WHERE total_amount < 0) AS negative_total_amount,
-        (SELECT COUNT(*) FROM product_sales WHERE quantity <= 0) AS non_positive_item_qty,
+        (SELECT COUNT(*) FROM recent_sales) AS total_sales_audited,
+        (SELECT COUNT(*) FROM product_sales ps JOIN recent_sales rs ON rs.id = ps.sale_id) AS total_items_audited,
+        (SELECT COUNT(DISTINCT rs.customer_id) FROM recent_sales rs WHERE rs.customer_id IS NOT NULL) AS total_customers_audited,
+        (SELECT COUNT(*) FROM recent_sales WHERE store_id IS NULL) AS sales_missing_store,
+        (SELECT COUNT(*) FROM recent_sales WHERE channel_id IS NULL) AS sales_missing_channel,
+        (SELECT COUNT(*) FROM recent_sales WHERE created_at IS NULL) AS sales_missing_created_at,
+        (SELECT COUNT(*) FROM recent_sales WHERE total_amount < 0) AS negative_total_amount,
+        (SELECT COUNT(*) FROM product_sales ps JOIN recent_sales rs ON rs.id = ps.sale_id WHERE ps.quantity <= 0) AS non_positive_item_qty,
         (SELECT COUNT(*) FROM product_sales ps LEFT JOIN sales s ON s.id = ps.sale_id WHERE s.id IS NULL) AS orphan_product_sales,
-        (SELECT COUNT(*) FROM customers WHERE email IS NULL OR email = '') AS customers_missing_email,
-        (SELECT COUNT(*) FROM customers WHERE email IS NOT NULL AND email <> '' AND POSITION('@' IN email) = 0) AS customers_invalid_email
+        (SELECT COUNT(*) FROM customers c JOIN recent_sales rs ON rs.customer_id = c.id WHERE c.email IS NULL OR c.email = '') AS customers_missing_email,
+        (SELECT COUNT(*) FROM customers c JOIN recent_sales rs ON rs.customer_id = c.id WHERE c.email IS NOT NULL AND c.email <> '' AND POSITION('@' IN c.email) = 0) AS customers_invalid_email
     `;
 
     const summary = rows?.[0] || {};
@@ -854,7 +861,8 @@ export const getDataQualitySummary = async (req: Request, res: Response) => {
 
 export const getDataQualityTrend = async (req: Request, res: Response) => {
   try {
-    const days = Math.max(parseInt(String(req.query.days || "7")), 1);
+    const parsedDays = Number.parseInt(String(req.query?.days ?? "7"), 10);
+    const days = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 7;
     const rows: any[] = await prisma.$queryRaw`
       WITH days AS (
         SELECT d::date AS date
@@ -866,14 +874,14 @@ export const getDataQualityTrend = async (req: Request, res: Response) => {
       )
       SELECT
         days.date,
-        COUNT(*) FILTER (WHERE s.store_id IS NULL) AS sales_missing_store,
-        COUNT(*) FILTER (WHERE s.channel_id IS NULL) AS sales_missing_channel,
-        COUNT(*) FILTER (WHERE s.created_at IS NULL) AS sales_missing_created_at,
-        COUNT(*) FILTER (WHERE s.total_amount < 0) AS negative_total_amount,
-        COUNT(*) FILTER (WHERE ps.quantity <= 0) AS non_positive_item_qty,
-        COUNT(*) FILTER (WHERE ps.sale_id IS NULL) AS orphan_product_sales,
-        COUNT(*) FILTER (WHERE c.email IS NULL OR c.email = '') AS customers_missing_email,
-        COUNT(*) FILTER (WHERE c.email IS NOT NULL AND c.email <> '' AND POSITION('@' IN c.email) = 0) AS customers_invalid_email
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND s.store_id IS NULL) AS sales_missing_store,
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND s.channel_id IS NULL) AS sales_missing_channel,
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND s.created_at IS NULL) AS sales_missing_created_at,
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND s.total_amount < 0) AS negative_total_amount,
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND ps.quantity <= 0) AS non_positive_item_qty,
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND ps.sale_id IS NULL) AS orphan_product_sales,
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND (c.email IS NULL OR c.email = '')) AS customers_missing_email,
+        COUNT(*) FILTER (WHERE s.id IS NOT NULL AND c.email IS NOT NULL AND c.email <> '' AND POSITION('@' IN c.email) = 0) AS customers_invalid_email
       FROM days
       LEFT JOIN sales s ON s.created_at::date = days.date
       LEFT JOIN product_sales ps ON ps.sale_id = s.id
@@ -899,5 +907,7 @@ export const getDataQualityTrend = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
 
 

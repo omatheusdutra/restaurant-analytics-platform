@@ -124,7 +124,7 @@ export const DashboardPage: React.FC = () => {
           apiClient.getSalesByChannel(params),
           apiClient.getTimeSeries({ ...params, groupBy: "day" }),
           apiClient.getInsights(params),
-          apiClient.getDataQualitySummary(),
+          apiClient.getDataQualitySummary(QUALITY_TREND_DAYS),
           apiClient.getDataQualityTrend(QUALITY_TREND_DAYS),
         ]);
       setOverview(overviewData);
@@ -254,8 +254,8 @@ export const DashboardPage: React.FC = () => {
       </section>
 
       {/* Charts Grid */}
-      <section aria-label="Visualizações de Dados">
-        <h2 className="sr-only">Visualizações de Dados</h2>
+      <section aria-label="Visualizacoes de Dados">
+        <h2 className="sr-only">Visualizacoes de Dados</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <h3 className="text-20 font-semibold mb-4 text-gray-900 dark:text-white">
@@ -335,7 +335,7 @@ export const DashboardPage: React.FC = () => {
             <h2 className="text-20 font-semibold text-gray-900 dark:text-white">Qualidade de Dados</h2>
             <div className="flex items-center gap-2 text-14 text-gray-500 dark:text-gray-400">
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-              Atualizado (últimos {QUALITY_TREND_DAYS} dias)
+              Atualizado (ultimos {QUALITY_TREND_DAYS} dias)
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -358,13 +358,13 @@ export const DashboardPage: React.FC = () => {
               subtitle={qualityBadge(dataQuality.salesMissingChannel)}
             />
             <MetricCard
-              title="Itens com Quantidade Inválida"
+              title="Itens com Quantidade Invalida"
               value={dataQuality.nonPositiveItemQty}
               icon={<XCircle className="w-5 h-5 text-primary-600" aria-hidden="true" />}
               subtitle={qualityBadge(dataQuality.nonPositiveItemQty)}
             />
             <MetricCard
-              title="Emails Inválidos"
+              title="Emails Invalidos"
               value={dataQuality.customersInvalidEmail}
               icon={<XCircle className="w-5 h-5 text-primary-600" aria-hidden="true" />}
               subtitle={qualityBadge(dataQuality.customersInvalidEmail)}
@@ -373,7 +373,7 @@ export const DashboardPage: React.FC = () => {
 
           {dataQualityTrend.length > 0 && (
             <div className="card mt-4">
-              <h3 className="text-16 font-semibold mb-3 text-gray-900 dark:text-white">Tendência (últimos 7 dias)</h3>
+              <h3 className="text-16 font-semibold mb-3 text-gray-900 dark:text-white">Tendencia (ultimos 7 dias)</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={dataQualityTrend}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -386,8 +386,8 @@ export const DashboardPage: React.FC = () => {
                   <Legend />
                   <Line type="monotone" dataKey="salesMissingStore" name="Pedidos sem Loja" stroke="#ef4444" strokeWidth={2} />
                   <Line type="monotone" dataKey="salesMissingChannel" name="Pedidos sem Canal" stroke="#f59e0b" strokeWidth={2} />
-                  <Line type="monotone" dataKey="nonPositiveItemQty" name="Itens Inválidos" stroke="#6366f1" strokeWidth={2} />
-                  <Line type="monotone" dataKey="customersInvalidEmail" name="Emails Inválidos" stroke="#0ea5e9" strokeWidth={2} />
+                  <Line type="monotone" dataKey="nonPositiveItemQty" name="Itens Invalidos" stroke="#6366f1" strokeWidth={2} />
+                  <Line type="monotone" dataKey="customersInvalidEmail" name="Emails Invalidos" stroke="#0ea5e9" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -403,7 +403,7 @@ export const DashboardPage: React.FC = () => {
             Performance por Canal
           </h3>
           <div className="overflow-x-auto">
-            <table className="w-full" role="table" aria-label="Métricas de desempenho por canal">
+            <table className="w-full" role="table" aria-label="Metricas de desempenho por canal">
               <thead className="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
                 <tr>
                   <th
@@ -475,4 +475,5 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
 

@@ -76,15 +76,12 @@ Main local flow:
 
 ## 🖼️ Screenshots
 
-> Substitua os caminhos abaixo pelos arquivos finais de imagem do projeto.
+Use os vídeos abaixo como demonstração oficial da aplicação:
 
-| Dashboard | Explore |
+| Demonstração | Arquivo |
 | --- | --- |
-| ![Dashboard](docs/assets/dashboard.png) | ![Explore](docs/assets/explore.png) |
-
-| Data Quality | Insights |
-| --- | --- |
-| ![Data Quality](docs/assets/data-quality.png) | ![Insights](docs/assets/insights.png) |
+| Dashboard, Qualidade de Dados e Insights | [🎥 dashboard.mp4](docs/assets/dashboard.mp4) |
+| Explorar Dados | [🎥 explorador.mp4](docs/assets/explorador.mp4) |
 
 ## 🧰 Stack
 
@@ -117,31 +114,41 @@ Main local flow:
 
 ## 🏗️ Arquitetura
 
-```text
-[Frontend React]
-      |
-      v
-[Backend API Express]
-      |
-      v
-[PostgreSQL]
-  |       \
-  |        -> [Views analytics.*]
-  |
-  -> [Data generator via docker compose profile tools]
+```mermaid
+flowchart LR
+    A[Cliente Web]
+    B[Frontend React]
+    C[Backend API Express]
+    D[(PostgreSQL nextage_db)]
+    E[Views analytics.*]
+    F[Data Generator<br/>docker compose --profile tools]
+    G[Scripts de Qualidade<br/>data_quality.sql / contracts.sql]
+    H[dbt Models<br/>staging, fct, marts]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    F --> D
+    G --> D
+    H --> D
+
+    style A fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
+    style B fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
+    style C fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
+    style D fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
+    style E fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
+    style F fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
+    style G fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
+    style H fill:#e5e7eb,stroke:#94a3b8,stroke-width:1px,color:#111827
 ```
 
-Estrutura principal:
+Notas:
 
-```text
-project/
-  backend/      # API + Prisma + testes Jest
-  frontend/     # App React + testes Vitest
-scripts/        # SQL, validação e automação
-docs/           # guias de produto, métricas e operação
-dbt/            # projeto dbt opcional
-```
-
+- Fluxo principal: `Cliente Web -> Frontend -> Backend -> PostgreSQL`.
+- Camada analitica: `analytics.*` + `dbt` para fatos/marts.
+- Qualidade de dados: checks SQL e validacoes de contrato.
+- Carga de dados: gerador sintetico via perfil `tools`.
 ---
 
 ## 🆕 O que foi alterado recentemente

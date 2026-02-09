@@ -1,4 +1,4 @@
-import {
+﻿import {
   getOverview,
   getTopProducts,
   getSalesByChannel,
@@ -145,7 +145,7 @@ describe('metricsController unit', () => {
     (prisma as any).sale.groupBy.mockResolvedValueOnce([
       { channelId: 1, _sum: { totalAmount: 10 }, _count: { id: 1 }, _avg: { totalAmount: 10 } },
     ]);
-    (prisma as any).channel.findUnique.mockResolvedValueOnce({ id: 1, name: 'BalcÃ£o', type: 'P' });
+    (prisma as any).channel.findUnique.mockResolvedValueOnce({ id: 1, name: 'BalcÃƒÂ£o', type: 'P' });
     const res = mockRes();
     await getSalesByChannel({ query: { storeId: '5' } } as any, res as any);
     expect(res.json).toHaveBeenCalled();
@@ -573,7 +573,7 @@ describe('metricsController unit', () => {
         saleStatusDesc: 'COMPLETED',
         channel: { name: 'App' },
         store: { name: 'Loja' },
-        customerName: 'JoÃ£o',
+        customerName: 'JoÃƒÂ£o',
         productSales: [
           { quantity: 2, basePrice: 10, totalPrice: 20, product: { name: 'Burger', category: { name: 'Food' } } },
         ],
@@ -728,6 +728,53 @@ describe('metricsController unit', () => {
     const { getDataQualityTrend } = await import('@/controllers/metricsController');
     await getDataQualityTrend({ query: {} } as any, res as any);
     expect(res.json).toHaveBeenCalledWith([]);
+  });
+  it('getDataQualitySummary falls back to 7 days when days is invalid', async () => {
+    (prisma as any).$queryRaw.mockResolvedValueOnce([{
+      total_sales_audited: 1,
+      total_items_audited: 2,
+      total_customers_audited: 3,
+      sales_missing_store: 0,
+      sales_missing_channel: 0,
+      sales_missing_created_at: 0,
+      negative_total_amount: 0,
+      non_positive_item_qty: 0,
+      orphan_product_sales: 0,
+      customers_missing_email: 0,
+      customers_invalid_email: 0,
+    }]);
+    const res = mockRes();
+    const { getDataQualitySummary } = await import('@/controllers/metricsController');
+    await getDataQualitySummary({ query: { days: '0' } } as any, res as any);
+    expect((prisma as any).$queryRaw).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      totalSalesAudited: 1,
+      totalItemsAudited: 2,
+      totalCustomersAudited: 3,
+    }));
+  });
+
+  it('getDataQualityTrend falls back to 7 days when days is invalid', async () => {
+    (prisma as any).$queryRaw.mockResolvedValueOnce([
+      {
+        date: '2025-01-10',
+        sales_missing_store: 0,
+        sales_missing_channel: 1,
+        sales_missing_created_at: 0,
+        negative_total_amount: 0,
+        non_positive_item_qty: 0,
+        orphan_product_sales: 0,
+        customers_missing_email: 0,
+        customers_invalid_email: 0,
+      },
+    ]);
+    const res = mockRes();
+    const { getDataQualityTrend } = await import('@/controllers/metricsController');
+    await getDataQualityTrend({ query: { days: 'abc' } } as any, res as any);
+    expect((prisma as any).$queryRaw).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({ date: '2025-01-10', salesMissingChannel: 1 }),
+    ]);
   });
 });
 
