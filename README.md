@@ -76,12 +76,19 @@ Main local flow:
 
 ## 🖼️ Screenshots
 
-Use os vídeos abaixo como demonstração oficial da aplicação:
+Demonstrações em vídeo:
 
-| Demonstração | Arquivo |
-| --- | --- |
-| Dashboard, Qualidade de Dados e Insights | [🎥 dashboard.mp4](docs/assets/dashboard.mp4) |
-| Explorar Dados | [🎥 explorador.mp4](docs/assets/explorador.mp4) |
+### Dashboard, Qualidade de Dados e Insights
+
+<video src="docs/assets/dashboard.mp4" controls autoplay loop muted playsinline width="100%"></video>
+
+Fallback: [baixar dashboard.mp4](docs/assets/dashboard.mp4)
+
+### Explorar Dados
+
+<video src="docs/assets/explorador.mp4" controls autoplay loop muted playsinline width="100%"></video>
+
+Fallback: [baixar explorador.mp4](docs/assets/explorador.mp4)
 
 ## 🧰 Stack
 
