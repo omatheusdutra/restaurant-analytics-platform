@@ -76,19 +76,17 @@ Main local flow:
 
 ## 🖼️ Screenshots
 
-Demonstrações em vídeo:
+Demonstrações animadas no README (formato GIF):
 
 ### Dashboard, Qualidade de Dados e Insights
 
-<video src="docs/assets/dashboard.mp4" controls autoplay loop muted playsinline width="100%"></video>
-
-Fallback: [baixar dashboard.mp4](docs/assets/dashboard.mp4)
+![Dashboard Demo](docs/assets/dashboard.gif)
 
 ### Explorar Dados
 
-<video src="docs/assets/explorador.mp4" controls autoplay loop muted playsinline width="100%"></video>
+![Explorar Demo](docs/assets/explorador.gif)
 
-Fallback: [baixar explorador.mp4](docs/assets/explorador.mp4)
+> Dica: mantenha também os `.mp4` em `docs/assets/` para versão em alta qualidade fora do README.
 
 ## 🧰 Stack
 
