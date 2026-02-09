@@ -86,7 +86,7 @@ Demonstrações animadas no README (formato GIF):
 
 ![Explorar Demo](docs/assets/explorador.gif)
 
-> Dica: mantenha também os `.mp4` em `docs/assets/` para versão em alta qualidade fora do README.
+> Dica: `.mp4` em `docs/assets/` para versão em alta qualidade fora do README.
 
 ## 🧰 Stack
 
@@ -512,4 +512,5 @@ Botao `Inicio` invalida cache de dashboard. Se necessário, force refresh (`Ctrl
 ## 📄 License
 
 MIT
+
 
