@@ -5,8 +5,7 @@
     runtime: node
     rootDir: project/backend
     buildCommand: npm ci && npx prisma generate && npm run build
-    preDeployCommand: npx prisma migrate deploy
-    startCommand: node dist/index.js
+    startCommand: npx prisma migrate deploy && node dist/index.js
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
