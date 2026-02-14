@@ -20,24 +20,47 @@
 
 ## 🧭 Sumário
 
-- [Visão Geral](#visão-geral)
-- [Resumo em Inglês](#english-summary)
-- [Capturas de Tela](#screenshots)
-- [Pilha Tecnológica](#stack)
-- [Arquitetura](#arquitetura)
-- [O que foi alterado recentemente](#o-que-foi-alterado-recentemente)
-- [Guia Rápido Completo](#quickstart-completo)
-- [Deploy (Vercel + Render)](#deploy-vercel--render)
-- [Scripts Principais](#scripts-principais)
-- [Testes](#testes)
-- [dbt (Opcional)](#dbt-opcional)
-- [Validação Completa](#validação-completa)
-- [Healthcheck Rápido](#healthcheck-rápido)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
-- [Endpoints da API](#api-endpoints)
-- [Segurança e Qualidade](#segurança-e-qualidade)
-- [Documentação](#documentação)
-- [Solução de Problemas](#troubleshooting)
+- [🍽️📊 Restaurant Analytics](#️-restaurant-analytics)
+  - [🧭 Sumário](#-sumário)
+  - [📌 Visão Geral](#-visão-geral)
+  - [🌎 English Summary](#-english-summary)
+  - [🖼️ Screenshots](#️-screenshots)
+    - [Dashboard, Qualidade de Dados e Insights](#dashboard-qualidade-de-dados-e-insights)
+    - [Explorar Dados](#explorar-dados)
+  - [🧰 Stack](#-stack)
+    - [Backend](#backend)
+    - [Frontend](#frontend)
+    - [Data / Plataforma](#data--plataforma)
+  - [🏗️ Arquitetura](#️-arquitetura)
+  - [🆕 O que foi alterado recentemente](#-o-que-foi-alterado-recentemente)
+  - [⚡ Quickstart Completo](#-quickstart-completo)
+    - [1) Clonar e entrar na raiz 📂](#1-clonar-e-entrar-na-raiz-)
+    - [2) Criar arquivos `.env` 🔐](#2-criar-arquivos-env-)
+    - [3) Reset completo do banco + seed 🗄️](#3-reset-completo-do-banco--seed-️)
+    - [4) Subir aplicacao ▶️](#4-subir-aplicacao-️)
+  - [Deploy (Vercel + Render)](#deploy-vercel--render)
+  - [Scripts Principais](#scripts-principais)
+  - [🧪 Testes](#-testes)
+  - [🔶 dbt (Opcional)](#-dbt-opcional)
+  - [🧪 Validação Completa](#-validação-completa)
+  - [🩺 Healthcheck Rápido](#-healthcheck-rápido)
+  - [⚙️ Variáveis de Ambiente](#️-variáveis-de-ambiente)
+    - [Raiz (`.env`)](#raiz-env)
+    - [Backend (`project/backend/.env`)](#backend-projectbackendenv)
+    - [Frontend (`project/frontend/.env`)](#frontend-projectfrontendenv)
+  - [🔌 API Endpoints](#-api-endpoints)
+    - [Auth](#auth)
+    - [Metrics](#metrics)
+    - [Explore](#explore)
+    - [Dashboards](#dashboards)
+  - [🔒 Segurança e Qualidade](#-segurança-e-qualidade)
+  - [📚 Documentação](#-documentação)
+  - [🛠️ Troubleshooting](#️-troubleshooting)
+    - [1) `DATABASE_URL not found`](#1-database_url-not-found)
+    - [2) `psql` não encontrado](#2-psql-não-encontrado)
+    - [3) Frontend sem dados](#3-frontend-sem-dados)
+    - [4) Home sem recarregar dados](#4-home-sem-recarregar-dados)
+  - [📄 License](#-license)
 
 ---
 
@@ -243,42 +266,11 @@ Por padrao, o script abre dois processos:
 
 ## Deploy (Vercel + Render)
 
-Configuracao recomendada:
+[![Frontend Producao](https://img.shields.io/badge/Frontend-Producao-000000?logo=vercel&logoColor=white)](https://restaurant-analytics-platform-five.vercel.app)
+[![API Producao](https://img.shields.io/badge/API-Producao-46E3B7?logo=render&logoColor=111827)](https://nextage-backend.onrender.com/health)
 
-- Frontend no Vercel
-- Backend + Postgres no Render
-
-### 1) Backend e banco no Render
-
-Use `render.yaml` (raiz do repositorio) via Blueprint:
-
-1. Fa?a push do codigo no GitHub.
-2. No Render: `New +` -> `Blueprint` -> selecione o repositorio.
-3. Clique em `Apply` para criar `nextage-backend` e `nextage-postgres`.
-4. Ao final, copie a URL publica do backend.
-
-Ajuste no Render (backend):
-
-- `CORS_ORIGIN=https://SEU_APP_VERCEL.vercel.app` (ou seu dominio final)
-
-### 2) Frontend no Vercel
-
-No projeto da Vercel:
-
-- Root Directory: `project/frontend`
-- Build Command: `npm run build`
-- Output Directory: `dist`
-- Environment Variable:
-- `VITE_API_URL=https://URL_DO_BACKEND_NO_RENDER`
-
-Arquivo de suporte para rotas SPA:
-
-- `project/frontend/vercel.json`
-
-### 3) Validacao
-
-- Frontend: `https://SEU_APP_VERCEL.vercel.app`
-- API: `https://URL_DO_BACKEND_NO_RENDER/health`
+- 🌐 Frontend: `https://restaurant-analytics-platform-five.vercel.app`
+- ⚙️❤️ API Healthcheck: `https://nextage-backend.onrender.com/health`
 
 ---
 
