@@ -1,0 +1,29 @@
+﻿services:
+  - type: web
+    name: nextage-backend
+    plan: free
+    runtime: node
+    rootDir: project/backend
+    buildCommand: npm ci && npx prisma generate && npm run build
+    preDeployCommand: npx prisma migrate deploy
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nextage-postgres
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: CORS_ORIGIN
+        value: https://SEU_APP_VERCEL.vercel.app
+
+databases:
+  - name: nextage-postgres
+    plan: free
+    databaseName: nextage_db
+    user: nextage

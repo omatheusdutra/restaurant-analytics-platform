@@ -27,6 +27,7 @@
 - [Arquitetura](#arquitetura)
 - [O que foi alterado recentemente](#o-que-foi-alterado-recentemente)
 - [Guia Rápido Completo](#quickstart-completo)
+- [Deploy (Vercel + Render)](#deploy-vercel--render)
 - [Scripts Principais](#scripts-principais)
 - [Testes](#testes)
 - [dbt (Opcional)](#dbt-opcional)
@@ -240,11 +241,53 @@ Por padrao, o script abre dois processos:
 
 ---
 
-## 🧩 Scripts Principais
+## Deploy (Vercel + Render)
+
+Configuracao recomendada:
+
+- Frontend no Vercel
+- Backend + Postgres no Render
+
+### 1) Backend e banco no Render
+
+Use `render.yaml` (raiz do repositorio) via Blueprint:
+
+1. Fa?a push do codigo no GitHub.
+2. No Render: `New +` -> `Blueprint` -> selecione o repositorio.
+3. Clique em `Apply` para criar `nextage-backend` e `nextage-postgres`.
+4. Ao final, copie a URL publica do backend.
+
+Ajuste no Render (backend):
+
+- `CORS_ORIGIN=https://SEU_APP_VERCEL.vercel.app` (ou seu dominio final)
+
+### 2) Frontend no Vercel
+
+No projeto da Vercel:
+
+- Root Directory: `project/frontend`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Environment Variable:
+- `VITE_API_URL=https://URL_DO_BACKEND_NO_RENDER`
+
+Arquivo de suporte para rotas SPA:
+
+- `project/frontend/vercel.json`
+
+### 3) Validacao
+
+- Frontend: `https://SEU_APP_VERCEL.vercel.app`
+- API: `https://URL_DO_BACKEND_NO_RENDER/health`
+
+---
+
+## Scripts Principais
 
 | Script | Objetivo |
 | --- | --- |
 | `project/backend/npm run db:reset` | Reset DB, aplicar schema Prisma e gerar dados |
+| `render.yaml` | Blueprint de deploy no Render (backend + postgres) |
 | `scripts/start_all.ps1` | Setup backend/frontend e start dos 2 servidores |
 | `scripts/validate_all.ps1` | Validacao E2E (SQL + testes + API checks) |
 | `scripts/healthcheck.ps1` | Check rapido de Docker/Postgres/API/Frontend (com status PASS/FAIL) |
