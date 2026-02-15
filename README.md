@@ -24,6 +24,7 @@
   - [🧭 Sumário](#-sumário)
   - [📌 Visão Geral](#-visão-geral)
   - [🌎 English Summary](#-english-summary)
+  - [🚀 Deploy (Vercel + Render)](#deploy-vercel--render)
   - [🖼️ Screenshots](#️-screenshots)
     - [Dashboard, Qualidade de Dados e Insights](#dashboard-qualidade-de-dados-e-insights)
     - [Explorar Dados](#explorar-dados)
@@ -38,7 +39,6 @@
     - [2) Criar arquivos `.env` 🔐](#2-criar-arquivos-env-)
     - [3) Reset completo do banco + seed 🗄️](#3-reset-completo-do-banco--seed-️)
     - [4) Subir aplicacao ▶️](#4-subir-aplicacao-️)
-  - [Deploy (Vercel + Render)](#deploy-vercel--render)
   - [Scripts Principais](#scripts-principais)
   - [🧪 Testes](#-testes)
   - [🔶 dbt (Opcional)](#-dbt-opcional)
@@ -95,6 +95,17 @@ Main local flow:
 1. `npm run db:reset` in `project/backend`
 2. `scripts/start_all.ps1`
 3. Optional: `scripts/validate_all.ps1`
+
+
+---
+
+## 🚀 Deploy (Vercel + Render)
+
+[![Frontend Producao](https://img.shields.io/badge/Frontend-Producao-000000?logo=vercel&logoColor=white)](https://restaurant-analytics-platform-five.vercel.app)
+[![API Producao](https://img.shields.io/badge/API-Producao-46E3B7?logo=render&logoColor=111827)](https://nextage-backend.onrender.com/health)
+
+- 🌐 Frontend: `https://restaurant-analytics-platform-five.vercel.app`
+- ⚙️❤️ API Healthcheck: `https://nextage-backend.onrender.com/health`
 
 ---
 
@@ -261,16 +272,6 @@ Por padrao, o script abre dois processos:
 
 - backend (`npm run dev`) em `project/backend`
 - frontend (`npm run dev`) em `project/frontend`
-
----
-
-## Deploy (Vercel + Render)
-
-[![Frontend Producao](https://img.shields.io/badge/Frontend-Producao-000000?logo=vercel&logoColor=white)](https://restaurant-analytics-platform-five.vercel.app)
-[![API Producao](https://img.shields.io/badge/API-Producao-46E3B7?logo=render&logoColor=111827)](https://nextage-backend.onrender.com/health)
-
-- 🌐 Frontend: `https://restaurant-analytics-platform-five.vercel.app`
-- ⚙️❤️ API Healthcheck: `https://nextage-backend.onrender.com/health`
 
 ---
 
@@ -559,6 +560,5 @@ Botao `Inicio` invalida cache de dashboard. Se necessário, force refresh (`Ctrl
 ## 📄 License
 
 MIT
-
 
 
