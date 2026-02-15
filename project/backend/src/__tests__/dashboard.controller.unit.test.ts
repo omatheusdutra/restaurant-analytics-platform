@@ -181,6 +181,22 @@ describe('dashboardController unit', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ name: 'Public', createdBy: 'Alice' }));
   });
 
+
+
+  it('getDashboard/updateDashboard/deleteDashboard return 400 on invalid id', async () => {
+    const res1 = mockRes();
+    await getDashboard({ userId: 1, params: { id: '0' } } as any, res1 as any);
+    expect(res1.status).toHaveBeenCalledWith(400);
+
+    const res2 = mockRes();
+    await updateDashboard({ userId: 1, params: { id: '-1' }, body: {} } as any, res2 as any);
+    expect(res2.status).toHaveBeenCalledWith(400);
+
+    const res3 = mockRes();
+    await deleteDashboard({ userId: 1, params: { id: 'abc' } } as any, res3 as any);
+    expect(res3.status).toHaveBeenCalledWith(400);
+  });
+
   it('getSharedDashboard 500 on error', async () => {
     (prisma as any).dashboard.findFirst.mockRejectedValueOnce(new Error('x'));
     const res = mockRes();

@@ -73,22 +73,19 @@ function Run-BackendTests {
   Push-Location (Join-Path $RepoRoot "project/backend")
   try {
     if (Get-DbAvailable) {
-      Write-Host "DB available: running full backend test suite."
-      $oldRun = $env:RUN_INTEGRATION
+      Write-Host "DB available: running backend unit + integration suite."
       $oldDb = $env:DATABASE_URL
-      $env:RUN_INTEGRATION = "1"
       if (-not $env:DATABASE_URL) {
         $env:DATABASE_URL = "postgresql://${DbUser}:${DbPassword}@localhost:5432/${DbName}"
       }
       try {
-        npm test
+        npm run test:all
       } finally {
-        if ($null -eq $oldRun) { Remove-Item Env:RUN_INTEGRATION -ErrorAction SilentlyContinue } else { $env:RUN_INTEGRATION = $oldRun }
         if ($null -eq $oldDb) { Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue } else { $env:DATABASE_URL = $oldDb }
       }
     } else {
       Write-Host "DB not available: running unit-only backend tests."
-      npm test -- --testPathIgnorePatterns=metrics.test.ts --testPathIgnorePatterns=auth.test.ts
+      npm test
     }
   } finally {
     Pop-Location

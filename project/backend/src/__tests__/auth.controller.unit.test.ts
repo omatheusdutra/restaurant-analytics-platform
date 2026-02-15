@@ -2,6 +2,7 @@ import { register, login, getProfile, updateProfile, changePassword } from '@/co
 import prisma from '@/config/database';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { env } from '@/config/env';
 
 jest.mock('@/config/database', () => ({
   __esModule: true,
@@ -183,6 +184,91 @@ describe('authController unit', () => {
     const res = mockRes();
     await changePassword(req, res as any);
     expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+
+
+  it('register returns 403 when registration is disabled in production', async () => {
+    const prevAllow = env.ALLOW_REGISTRATION;
+    const prevNode = env.NODE_ENV;
+    env.ALLOW_REGISTRATION = false as any;
+    env.NODE_ENV = 'production' as any;
+
+    const req: any = { body: { email: 'a@a.com', password: '123456', name: 'A' } };
+    const res = mockRes();
+    await register(req, res as any);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    env.ALLOW_REGISTRATION = prevAllow as any;
+    env.NODE_ENV = prevNode as any;
+  });
+
+  it('sets auth cookie on register/login and clears on logout', async () => {
+    const prevSecure = env.AUTH_COOKIE_SECURE;
+    env.AUTH_COOKIE_SECURE = true as any;
+
+    (prisma as any).user.findUnique.mockResolvedValueOnce(null);
+    (prisma as any).user.create.mockResolvedValueOnce({ id: 11, email: 'cookie@x.com', name: 'Cookie' });
+    const resReg: any = mockRes();
+    resReg.cookie = jest.fn();
+    await register({ body: { email: 'cookie@x.com', password: '123456', name: 'Cookie' } } as any, resReg);
+    expect(resReg.cookie).toHaveBeenCalledWith(
+      env.AUTH_COOKIE_NAME,
+      expect.any(String),
+      expect.objectContaining({ sameSite: 'none', secure: true, httpOnly: true })
+    );
+
+    (prisma as any).user.findUnique.mockResolvedValueOnce({ id: 11, email: 'cookie@x.com', name: 'Cookie', password: 'hash' });
+    (bcrypt as any).compare.mockResolvedValueOnce(true);
+    const resLogin: any = mockRes();
+    resLogin.cookie = jest.fn();
+    await login({ body: { email: 'cookie@x.com', password: '123456' } } as any, resLogin);
+    expect(resLogin.cookie).toHaveBeenCalled();
+
+    const { logout } = await import('@/controllers/authController');
+    const resLogout: any = mockRes();
+    resLogout.clearCookie = jest.fn();
+    await logout({} as any, resLogout);
+    expect(resLogout.clearCookie).toHaveBeenCalledWith(
+      env.AUTH_COOKIE_NAME,
+      expect.objectContaining({ sameSite: 'none', secure: true, httpOnly: true })
+    );
+
+    const resLogoutNoFn: any = mockRes();
+    await logout({} as any, resLogoutNoFn);
+    expect(resLogoutNoFn.json).toHaveBeenCalledWith({ success: true });
+
+    env.AUTH_COOKIE_SECURE = prevSecure as any;
+  });
+
+
+
+  it('uses lax sameSite cookie options when secure cookie is disabled', async () => {
+    const prevSecure = env.AUTH_COOKIE_SECURE;
+    env.AUTH_COOKIE_SECURE = false as any;
+
+    (prisma as any).user.findUnique.mockResolvedValueOnce(null);
+    (prisma as any).user.create.mockResolvedValueOnce({ id: 21, email: 'lax@x.com', name: 'Lax' });
+    const res: any = mockRes();
+    res.cookie = jest.fn();
+    await register({ body: { email: 'lax@x.com', password: '123456', name: 'Lax' } } as any, res);
+
+    expect(res.cookie).toHaveBeenCalledWith(
+      env.AUTH_COOKIE_NAME,
+      expect.any(String),
+      expect.objectContaining({ sameSite: 'lax', secure: false })
+    );
+
+    const { logout } = await import('@/controllers/authController');
+    const resLogout: any = mockRes();
+    resLogout.clearCookie = jest.fn();
+    await logout({} as any, resLogout);
+    expect(resLogout.clearCookie).toHaveBeenCalledWith(
+      env.AUTH_COOKIE_NAME,
+      expect.objectContaining({ sameSite: 'lax', secure: false })
+    );
+
+    env.AUTH_COOKIE_SECURE = prevSecure as any;
   });
 
   it('register/login use JWT_SECRET from env', async () => {

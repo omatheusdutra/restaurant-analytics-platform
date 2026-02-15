@@ -310,10 +310,11 @@ Comandos principais:
 cd project/backend
 npm test
 
-# Backend + integracao (exige Postgres ativo)
-$env:RUN_INTEGRATION="1"
-npm test
-Remove-Item Env:RUN_INTEGRATION
+# Backend - somente integracao (exige Postgres ativo)
+npm run test:integration
+
+# Backend - suite completa
+npm run test:all
 
 # Frontend (Vitest)
 cd ../frontend
@@ -323,6 +324,12 @@ npm test
 cd ../..
 python scripts/test_api.py
 ```
+
+Notas:
+
+- `npm test` roda apenas testes unit?rios (sem `skipped`).
+- `npm run test:integration` roda apenas integra??o.
+- No CI, backend foi separado em dois jobs: `backend-unit` e `backend-integration`.
 
 Cobertura:
 
@@ -552,5 +559,6 @@ Botao `Inicio` invalida cache de dashboard. Se necessário, force refresh (`Ctrl
 ## 📄 License
 
 MIT
+
 
 

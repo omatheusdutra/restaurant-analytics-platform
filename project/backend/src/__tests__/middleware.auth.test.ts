@@ -54,4 +54,24 @@ describe('authMiddleware', () => {
     const v = (jwt as any).verify || (jwt as any).default.verify;
     expect(v).toHaveBeenCalledWith('abc', 'test-secret');
   });
+
+  it('accepts token from auth cookie and decodes URI component', () => {
+    const req: any = { headers: { cookie: 'nextage_auth=abc%20123; other=1' } };
+    const res = mockRes();
+    const next = jest.fn();
+    authMiddleware(req, res as any, next);
+    expect(next).toHaveBeenCalled();
+    const v = (jwt as any).verify || (jwt as any).default.verify;
+    expect(v).toHaveBeenCalledWith('abc 123', 'test-secret');
+  });
+
+  it('rejects when cookie does not contain expected auth cookie', () => {
+    const req: any = { headers: { cookie: 'other=token' } };
+    const res = mockRes();
+    const next = jest.fn();
+    authMiddleware(req, res as any, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
 });

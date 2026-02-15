@@ -28,7 +28,7 @@ export const cacheMiddleware = (duration: number = CACHE_DURATION) => {
     }
 
     // Never cache export/download responses.
-    if (String(req.query.format || "").toLowerCase() === "csv") {
+    if (String((req.query as any)?.format || "").toLowerCase() === "csv") {
       return next();
     }
 

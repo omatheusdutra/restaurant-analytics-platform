@@ -24,4 +24,14 @@ describe('parseDateRange', () => {
     expect(r.start.toISOString().startsWith('2024-01-01')).toBe(true);
     expect(r.end.toISOString().startsWith('2024-01-31')).toBe(true);
   });
+
+  it('falls back for invalid dates and swaps when start is after end', () => {
+    const invalid = parseDateRange('not-a-date', 'also-bad');
+    expect(invalid.start instanceof Date).toBe(true);
+    expect(invalid.end instanceof Date).toBe(true);
+
+    const swapped = parseDateRange('2024-02-10', '2024-02-01');
+    expect(swapped.start.toISOString().startsWith('2024-02-01')).toBe(true);
+    expect(swapped.end.toISOString().startsWith('2024-02-10')).toBe(true);
+  });
 });

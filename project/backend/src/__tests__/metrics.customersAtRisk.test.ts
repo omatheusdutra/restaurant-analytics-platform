@@ -1,4 +1,4 @@
-import { getCustomersAtRisk } from '@/controllers/metricsController';
+import { getCustomersAtRisk, __private as metricsPrivate } from '@/controllers/metricsController';
 import prisma from '@/config/database';
 
 jest.mock('@/config/database', () => ({
@@ -16,6 +16,14 @@ function mockRes() {
 }
 
 describe('metricsController - customers at risk', () => {
+
+  it('private helper coverage: maskEmail and escapeCsvCell', () => {
+    expect(metricsPrivate.maskEmail('ab@example.com')).toBe('a@example.com');
+    expect(metricsPrivate.maskEmail('alice@example.com')).toBe('al***@example.com');
+    expect(metricsPrivate.escapeCsvCell(undefined)).toBe('""');
+    expect(metricsPrivate.escapeCsvCell('=1+1')).toBe("\"\'=1+1\"");
+  });
+
   beforeEach(() => jest.clearAllMocks());
 
   it('returns customers meeting criteria', async () => {
@@ -53,4 +61,24 @@ describe('metricsController - customers at risk', () => {
     await getCustomersAtRisk({ query: { limit: '9999' } } as any, res as any);
     expect(res.status).toHaveBeenCalledWith(400);
   });
+
+  it('rejects invalid limit <= 0', async () => {
+    const res = mockRes();
+    await getCustomersAtRisk({ query: { limit: '0' } } as any, res as any);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('masks malformed emails as empty string', async () => {
+    (prisma as any).$queryRaw.mockResolvedValueOnce([
+      { id: 1, name: 'A', email: 'invalid-email', orders: 1, last_order: null, total_spent: 10 },
+      { id: 2, name: 'B', email: '@example.com', orders: 1, last_order: null, total_spent: 20 },
+    ]);
+    const res = mockRes();
+    await getCustomersAtRisk({ query: {} } as any, res as any);
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({ customerId: 1, email: '' }),
+      expect.objectContaining({ customerId: 2, email: '' }),
+    ]);
+  });
+
 });

@@ -776,6 +776,58 @@ describe('metricsController unit', () => {
       expect.objectContaining({ date: '2025-01-10', salesMissingChannel: 1 }),
     ]);
   });
+
+  it('ignores invalid channel/store ids in overview filter parsing', async () => {
+    (prisma as any).sale.aggregate
+      .mockResolvedValueOnce({
+        _sum: { totalAmount: 0, totalDiscount: 0, totalAmountItems: 0, deliveryFee: 0 },
+        _count: { id: 0 },
+        _avg: { totalAmount: 0, productionSeconds: 0, deliverySeconds: 0 },
+      })
+      .mockResolvedValueOnce({ _sum: { totalAmount: 0 }, _count: { id: 0 } });
+    (prisma as any).sale.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
+
+    const res = mockRes();
+    await getOverview({ query: { channelId: 'abc', storeId: '-1' } } as any, res as any);
+
+    const call = (prisma as any).sale.aggregate.mock.calls[0][0];
+    expect(call.where.channelId).toBeUndefined();
+    expect(call.where.storeId).toBeUndefined();
+  });
+
+  it('exportToCSV escapes spreadsheet formulas in text fields', async () => {
+    (prisma as any).sale.findMany.mockResolvedValueOnce([
+      {
+        id: 7,
+        createdAt: new Date('2024-02-01T10:00:00Z'),
+        productionSeconds: 0,
+        deliverySeconds: 0,
+        totalDiscount: 0,
+        deliveryFee: 0,
+        totalAmount: 10,
+        saleStatusDesc: 'COMPLETED',
+        channel: { name: '=HYPERLINK("x")' },
+        store: { name: '+SUM(A1:A2)' },
+        customerName: '@attacker',
+        productSales: [
+          {
+            quantity: 1,
+            basePrice: 10,
+            totalPrice: 10,
+            product: { name: '-CMD', category: { name: 'Food' } },
+          },
+        ],
+      },
+    ]);
+    const res = mockRes();
+    await exportToCSV({ query: {} } as any, res as any);
+    const csv = (res.send as any).mock.calls[0][0] as string;
+    expect(csv).toContain("\"\'=HYPERLINK(\"\"x\"\")\"");
+    expect(csv).toContain("\"\'+SUM(A1:A2)\"");
+    expect(csv).toContain("\"\'@attacker\"");
+    expect(csv).toContain("\"\'-CMD\"");
+  });
+
 });
 
 

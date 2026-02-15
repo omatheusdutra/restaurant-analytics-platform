@@ -210,6 +210,33 @@ describe('insightsController unit', () => {
     );
   });
 
+
+
+  it('handles invalid filter ids and fallback numeric values in channel/top3 branches', async () => {
+    (prisma as any).sale.aggregate.mockResolvedValueOnce({ _sum: { totalAmount: 100, totalAmountItems: 100, totalDiscount: 0 }, _count: { id: 5 }, _avg: { totalAmount: 20 } });
+    (prisma as any).productSale.groupBy.mockResolvedValueOnce([
+      { productId: 1, _sum: { quantity: 2, totalPrice: null } },
+      { productId: 2, _sum: { quantity: 1, totalPrice: 30 } },
+      { productId: 3, _sum: { quantity: 1, totalPrice: 20 } },
+    ]);
+    (prisma as any).sale.groupBy.mockResolvedValueOnce([
+      { channelId: 1, _sum: { totalAmount: null }, _count: { id: 2 } },
+      { channelId: 2, _sum: { totalAmount: 50 }, _count: { id: 3 } },
+    ]);
+    (prisma as any).sale.findMany.mockResolvedValueOnce([]);
+    (prisma as any).sale.count.mockResolvedValueOnce(10).mockResolvedValueOnce(0);
+    (prisma as any).product.findUnique.mockResolvedValueOnce({ id: 1, name: 'Top', category: { name: 'Cat' } });
+    (prisma as any).channel.findUnique.mockResolvedValueOnce({ id: 1, name: 'Canal X' });
+
+    const res = mockRes();
+    await getInsights({ query: { channelId: '0', storeId: '-1' } } as any, res as any);
+
+    const aggregateCall = (prisma as any).sale.aggregate.mock.calls.at(-1)[0];
+    expect(aggregateCall.where.channelId).toBeUndefined();
+    expect(aggregateCall.where.storeId).toBeUndefined();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ insights: expect.any(Array) }));
+  });
+
   it('top_product card with productDetails defined and missing totalPrice uses 0', async () => {
     (prisma as any).sale.aggregate.mockResolvedValueOnce({ _sum: { totalAmount: 1000, totalAmountItems: 1100, totalDiscount: 0 }, _count: { id: 10 }, _avg: { totalAmount: 100 } });
     (prisma as any).productSale.groupBy.mockResolvedValueOnce([

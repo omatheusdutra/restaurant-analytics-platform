@@ -42,7 +42,7 @@ function maskEmail(email: string): string {
   if (!email) return "";
   const [local, domain] = email.split("@");
   if (!local || !domain) return "";
-  const visible = local.length <= 2 ? local[0] || "*" : `${local.slice(0, 2)}***`;
+  const visible = local.length <= 2 ? local[0] : `${local.slice(0, 2)}***`;
   return `${visible}@${domain}`;
 }
 
@@ -965,6 +965,7 @@ export const getDataQualityTrend = async (req: Request, res: Response) => {
   }
 };
 
-
-
-
+export const __private = {
+  maskEmail,
+  escapeCsvCell,
+};

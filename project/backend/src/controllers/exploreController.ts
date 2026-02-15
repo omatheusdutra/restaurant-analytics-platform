@@ -305,3 +305,7 @@ export const runExploreQuery = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const __private = {
+  escapeCsvCell,
+};

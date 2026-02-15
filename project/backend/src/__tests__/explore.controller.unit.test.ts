@@ -1,4 +1,4 @@
-﻿import { runExploreQuery } from '@/controllers/exploreController';
+﻿import { runExploreQuery, __private as explorePrivate } from '@/controllers/exploreController';
 import prisma from '@/config/database';
 import { Prisma } from '@prisma/client';
 
@@ -25,6 +25,12 @@ function mockCountAndRows(rows: any[]) {
 }
 
 describe('exploreController unit', () => {
+
+  it('escapeCsvCell helper handles nullish and formula prefixes', () => {
+    expect(explorePrivate.escapeCsvCell(undefined)).toBe('""');
+    expect(explorePrivate.escapeCsvCell('=1+1')).toBe("\"\'=1+1\"");
+  });
+
   beforeEach(() => jest.clearAllMocks());
 
   it('returns JSON rows for simple query without dimension', async () => {
@@ -521,6 +527,23 @@ describe('exploreController unit', () => {
         rows: [],
       })
     );
+  });
+
+
+
+  it('CSV escapes formula-like values to prevent injection', async () => {
+    (prisma as any).$queryRaw
+      .mockResolvedValueOnce([{ total: BigInt(1) }])
+      .mockResolvedValueOnce([{ ts: new Date('2024-06-01T00:00:00Z'), dim: '=2+2', revenue: 10 }]);
+
+    const res = mockRes();
+    await runExploreQuery({
+      method: 'POST',
+      body: { measures: ['revenue'], time_grain: 'day', dimension: 'channel' },
+      query: { format: 'csv' },
+    } as any, res as any);
+
+    const csv = (res.send as jest.Mock).mock.calls[0][0] as string;    expect(csv).toContain("\"'=2+2\"");
   });
 
   it('covers CSV null fallbacks for dim and measure values', async () => {

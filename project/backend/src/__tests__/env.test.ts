@@ -79,5 +79,20 @@ describe('env config', () => {
       'http://c.com',
     ]);
   });
-});
 
+  it('parses boolean env flags and enforces short JWT secret in production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.DATABASE_URL = 'postgresql://u:p@localhost:5432/db';
+    process.env.CORS_ORIGIN = 'http://localhost:3000';
+    process.env.JWT_SECRET = 'short';
+    process.env.ALLOW_REGISTRATION = 'true';
+    process.env.AUTH_COOKIE_SECURE = 'yes';
+
+    const mod = await import('@/config/env');
+    expect(mod.env.ALLOW_REGISTRATION).toBe(true);
+    expect(mod.env.AUTH_COOKIE_SECURE).toBe(true);
+    expect(() => mod.validateEnv()).toThrow('JWT_SECRET must have at least 32 characters in production');
+  });
+
+
+});
