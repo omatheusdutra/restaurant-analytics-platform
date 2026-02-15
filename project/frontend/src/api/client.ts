@@ -146,17 +146,10 @@ export interface Dashboard {
 class ApiClient {
   private token: string | null = null;
 
-  constructor() {
-    this.token = localStorage.getItem("token");
-  }
+  constructor() {}
 
   setToken(token: string | null) {
     this.token = token;
-    if (token) {
-      localStorage.setItem("token", token);
-    } else {
-      localStorage.removeItem("token");
-    }
   }
 
   private async request<T>(
@@ -175,6 +168,7 @@ class ApiClient {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -207,6 +201,17 @@ class ApiClient {
     });
     this.setToken(response.token);
     return response;
+  }
+
+  async logout(): Promise<{ success: boolean }> {
+    try {
+      const response = await this.request<{ success: boolean }>("/api/auth/logout", {
+        method: "POST",
+      });
+      return response;
+    } finally {
+      this.setToken(null);
+    }
   }
 
   async getProfile(): Promise<User> {
@@ -294,9 +299,12 @@ class ApiClient {
     /* c8 ignore next */
     const query = params ? "?" + new URLSearchParams(params).toString() : "";
     const response = await fetch(`${API_URL}/api/metrics/export-csv${query}`, {
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-      },
+      headers: this.token
+        ? {
+            Authorization: `Bearer ${this.token}`,
+          }
+        : undefined,
+      credentials: "include",
     });
 
     if (!response.ok) {

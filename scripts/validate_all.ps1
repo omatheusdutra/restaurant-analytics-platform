@@ -2,7 +2,7 @@ param(
   [int]$QualityTrendDays = 7,
   [string]$DbUser = "nextage",
   [string]$DbName = "nextage_db",
-  [string]$DbPassword = "alan_zoka",
+  [string]$DbPassword = "change_me_local",
   [string]$ApiBaseUrl = "http://localhost:3001",
   [string]$ApiToken = "",
   [int]$WarnCustomersMissingEmail = 1,

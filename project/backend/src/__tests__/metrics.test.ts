@@ -1,7 +1,10 @@
 import request from 'supertest';
 import app from '../index';
 
-describe('Metrics Endpoints', () => {
+const runIntegration = process.env.RUN_INTEGRATION === '1';
+const describeIntegration = runIntegration ? describe : describe.skip;
+
+describeIntegration('Metrics Endpoints', () => {
   let token: string;
 
   beforeAll(async () => {

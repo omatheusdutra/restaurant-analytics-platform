@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useAuthStore } from '@/store/authStore';
 import { useFilterStore } from '@/store/filterStore';
 
@@ -8,6 +8,7 @@ vi.mock('@/api/client', () => ({
     updateProfile: vi.fn().mockResolvedValue({ id: 1, email: 'a@b.com', name: 'B' }),
     register: vi.fn().mockResolvedValue({ token: 't', user: { id: 1, email: 'a@b.com', name: 'A' } }),
     getProfile: vi.fn().mockResolvedValue({ id: 1, email: 'a@b.com', name: 'A' }),
+    logout: vi.fn().mockResolvedValue({ success: true }),
     setToken: vi.fn(),
   }
 }));

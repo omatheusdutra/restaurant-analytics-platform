@@ -7,26 +7,21 @@ describe('apiClient', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     (global as any).fetch = fetchMock;
-    // default ok response
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
-    localStorage.clear();
     apiClient.setToken(null);
   });
 
-  it('sets and clears token and sends Authorization header', async () => {
-    // set token via register/login response
+  it('stores token in memory and envia Authorization/credentials', async () => {
     fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ token: 't', user: { id: 1, email: 'e', name: 'n' } }) });
     await apiClient.login('e', 'p');
-    expect(localStorage.getItem('token')).toBe('t');
 
-    // next request should include Authorization
     fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) });
     await apiClient.getProfile();
     const lastCall = fetchMock.mock.calls.at(-1) as any[];
     expect(lastCall[1].headers['Authorization']).toBe('Bearer t');
+    expect(lastCall[1].credentials).toBe('include');
 
     apiClient.setToken(null);
-    expect(localStorage.getItem('token')).toBeNull();
   });
 
   it('propagates non-ok responses as Error', async () => {
@@ -43,4 +38,3 @@ describe('apiClient', () => {
     expect(call[1].body).toBeTruthy();
   });
 });
-

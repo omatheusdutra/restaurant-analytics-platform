@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-nextage_db}
       POSTGRES_USER: ${POSTGRES_USER:-nextage}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-alan_zoka}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local}
     ports:
       - "5432:5432"
     volumes:
@@ -29,7 +29,7 @@ services:
         condition: service_healthy
     environment:
       # Database URL used by the generator (defaults to local postgres service)
-      GEN_DB_URL: ${GEN_DB_URL:-postgresql://nextage:alan_zoka@postgres:5432/nextage_db}
+      GEN_DB_URL: ${GEN_DB_URL:-postgresql://nextage:change_me_local@postgres:5432/nextage_db}
       # Optional flags to control generation (leave unset to use defaults)
       # GEN_STORES: "50"
       # GEN_PRODUCTS: "540"
@@ -68,7 +68,7 @@ services:
     container_name: nextage-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@godlevel.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-change_me_admin}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "5050:80"

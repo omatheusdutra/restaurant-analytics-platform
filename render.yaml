@@ -18,6 +18,12 @@
         value: production
       - key: LOG_LEVEL
         value: info
+      - key: ALLOW_REGISTRATION
+        value: "false"
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: AUTH_COOKIE_NAME
+        value: nextage_auth
       - key: CORS_ORIGIN
         value: https://SEU_APP_VERCEL.vercel.app
 

@@ -185,7 +185,7 @@ Notas:
 - Banco padronizado para:
   - DB: `nextage_db`
   - User: `nextage`
-  - Password: `alan_zoka`
+  - Password: `change_me_local`
 - Containers renomeados:
   - Postgres: `nextage-db`
   - PgAdmin: `nextage-pgadmin`
@@ -306,9 +306,14 @@ Opcoes uteis de `start_all.ps1`:
 Comandos principais:
 
 ```powershell
-# Backend (Jest)
+# Backend (Jest - unitario por padrao)
 cd project/backend
 npm test
+
+# Backend + integracao (exige Postgres ativo)
+$env:RUN_INTEGRATION="1"
+npm test
+Remove-Item Env:RUN_INTEGRATION
 
 # Frontend (Vitest)
 cd ../frontend
@@ -422,17 +427,17 @@ Comportamento esperado:
 ```env
 POSTGRES_DB=nextage_db
 POSTGRES_USER=nextage
-POSTGRES_PASSWORD=alan_zoka
+POSTGRES_PASSWORD=change_me_local
 PGADMIN_DEFAULT_EMAIL=admin@godlevel.com
-PGADMIN_DEFAULT_PASSWORD=admin
-GEN_DB_URL=postgresql://nextage:alan_zoka@postgres:5432/nextage_db
+PGADMIN_DEFAULT_PASSWORD=change_me_admin
+GEN_DB_URL=postgresql://nextage:change_me_local@postgres:5432/nextage_db
 ```
 
 ### Backend (`project/backend/.env`)
 
 ```env
-DATABASE_URL="postgresql://nextage:alan_zoka@localhost:5432/nextage_db"
-JWT_SECRET="change-me-super-long-and-random"
+DATABASE_URL="postgresql://nextage:change_me_local@localhost:5432/nextage_db"
+JWT_SECRET="CHANGE_ME_WITH_AT_LEAST_32_CHARS"
 PORT=3001
 NODE_ENV=development
 CORS_ORIGIN="http://localhost:3000"

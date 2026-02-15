@@ -3,6 +3,12 @@ import prisma from "../config/database";
 import { AuthRequest } from "../middleware/auth";
 import crypto from "crypto";
 
+function parseDashboardId(idRaw: string): number | null {
+  const id = Number.parseInt(idRaw, 10);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  return id;
+}
+
 export const createDashboard = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId!;
@@ -23,10 +29,10 @@ export const createDashboard = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.status(201).json(dashboard);
+    return res.status(201).json(dashboard);
   } catch (error) {
     console.error("Create dashboard error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -35,29 +41,26 @@ export const getDashboards = async (req: AuthRequest, res: Response) => {
     const userId = req.userId!;
 
     const dashboards = await prisma.dashboard.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
     });
 
-    res.json(dashboards);
+    return res.json(dashboards);
   } catch (error) {
     console.error("Get dashboards error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const getDashboard = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId!;
-    const { id } = req.params;
+    const parsedId = parseDashboardId(req.params.id);
+    if (!parsedId) return res.status(400).json({ error: "invalid dashboard id" });
 
     const dashboard = await prisma.dashboard.findFirst({
       where: {
-        id: parseInt(id),
+        id: parsedId,
         userId,
       },
     });
@@ -66,22 +69,24 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: "Dashboard not found" });
     }
 
-    res.json(dashboard);
+    return res.json(dashboard);
   } catch (error) {
     console.error("Get dashboard error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const updateDashboard = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId!;
-    const { id } = req.params;
+    const parsedId = parseDashboardId(req.params.id);
+    if (!parsedId) return res.status(400).json({ error: "invalid dashboard id" });
+
     const { name, description, layout, isPublic } = req.body;
 
     const existingDashboard = await prisma.dashboard.findFirst({
       where: {
-        id: parseInt(id),
+        id: parsedId,
         userId,
       },
     });
@@ -98,15 +103,11 @@ export const updateDashboard = async (req: AuthRequest, res: Response) => {
     }
 
     const dashboard = await prisma.dashboard.update({
-      where: {
-        id: parseInt(id),
-      },
+      where: { id: parsedId },
       data: {
         name: name || existingDashboard.name,
         description:
-          description !== undefined
-            ? description
-            : existingDashboard.description,
+          description !== undefined ? description : existingDashboard.description,
         layout: layout || existingDashboard.layout,
         isPublic:
           isPublic !== undefined ? isPublic : existingDashboard.isPublic,
@@ -114,21 +115,22 @@ export const updateDashboard = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.json(dashboard);
+    return res.json(dashboard);
   } catch (error) {
     console.error("Update dashboard error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const deleteDashboard = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId!;
-    const { id } = req.params;
+    const parsedId = parseDashboardId(req.params.id);
+    if (!parsedId) return res.status(400).json({ error: "invalid dashboard id" });
 
     const dashboard = await prisma.dashboard.findFirst({
       where: {
-        id: parseInt(id),
+        id: parsedId,
         userId,
       },
     });
@@ -138,15 +140,13 @@ export const deleteDashboard = async (req: AuthRequest, res: Response) => {
     }
 
     await prisma.dashboard.delete({
-      where: {
-        id: parseInt(id),
-      },
+      where: { id: parsedId },
     });
 
-    res.json({ message: "Dashboard deleted successfully" });
+    return res.json({ message: "Dashboard deleted successfully" });
   } catch (error) {
     console.error("Delete dashboard error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -172,7 +172,7 @@ export const getSharedDashboard = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Dashboard not found" });
     }
 
-    res.json({
+    return res.json({
       id: dashboard.id,
       name: dashboard.name,
       description: dashboard.description,
@@ -183,6 +183,6 @@ export const getSharedDashboard = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Get shared dashboard error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };

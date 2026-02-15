@@ -1,7 +1,10 @@
 import request from "supertest";
 import app from "../index";
 
-describe("Auth Controller", () => {
+const runIntegration = process.env.RUN_INTEGRATION === "1";
+const describeIntegration = runIntegration ? describe : describe.skip;
+
+describeIntegration("Auth Controller", () => {
   describe("POST /api/auth/register", () => {
     it("should register a new user successfully", async () => {
       const response = await request(app)

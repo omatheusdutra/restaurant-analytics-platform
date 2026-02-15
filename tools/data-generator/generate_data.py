@@ -768,7 +768,7 @@ def create_indexes(conn):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate God Level data')
-    parser.add_argument('--db-url', default='postgresql://nextage:nola_2025@localhost:5432/nola_db',
+    parser.add_argument('--db-url', default='postgresql://nextage:change_me_local@localhost:5432/nextage_db',
                        help='PostgreSQL connection URL')
     parser.add_argument('--stores', type=int, default=50, help='Number of stores')
     parser.add_argument('--products', type=int, default=540, help='Number of products')

@@ -20,15 +20,53 @@ const MAX_TOP_PRODUCTS = 100;
 const MAX_EXPORT_ROWS = 5000;
 const MAX_CUSTOMERS_AT_RISK = 500;
 
+
+function parseOptionalId(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+  return parsed;
+}
+
+function parsePositiveInt(value: unknown, fallback: number): number {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function maskEmail(email: string): string {
+  if (!email) return "";
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return "";
+  const visible = local.length <= 2 ? local[0] || "*" : `${local.slice(0, 2)}***`;
+  return `${visible}@${domain}`;
+}
+
+function escapeCsvCell(value: unknown): string {
+  const str = String(value ?? "").replace(/"/g, '""');
+  if (/^[=+\-@]/.test(str)) return `"'${str}"`;
+  return `"${str}"`;
+}
+
 export const parseDateRange = (
   startDate?: string,
   endDate?: string
 ): DateRange => {
-  const end = endDate ? new Date(endDate) : new Date();
-  const start = startDate
+  const parsedEnd = endDate ? new Date(endDate) : new Date();
+  const end = Number.isNaN(parsedEnd.getTime()) ? new Date() : parsedEnd;
+
+  const parsedStart = startDate
     ? new Date(startDate)
-    : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
-  return { start, end };
+    : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const start = Number.isNaN(parsedStart.getTime())
+    ? new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000)
+    : parsedStart;
+
+  return start <= end ? { start, end } : { start: end, end: start };
 };
 
 export const getOverview = async (req: Request, res: Response) => {
@@ -43,8 +81,10 @@ export const getOverview = async (req: Request, res: Response) => {
       },
     };
 
-    if (channelId) baseWhere.channelId = parseInt(channelId as string);
-    if (storeId) baseWhere.storeId = parseInt(storeId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) baseWhere.channelId = parsedChannelId;
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) baseWhere.storeId = parsedStoreId;
 
     const completedWhere: Prisma.SaleWhereInput = {
       ...baseWhere,
@@ -158,13 +198,14 @@ export const getOverview = async (req: Request, res: Response) => {
 export const getTopProducts = async (req: Request, res: Response) => {
   try {
     const { startDate, endDate, channelId, storeId, limit = "10" } = req.query;
-    const limitNum = parseInt(limit as string);
-    if (!Number.isFinite(limitNum) || limitNum <= 0) {
+    const rawLimit = Number(limit);
+    if (!Number.isInteger(rawLimit) || rawLimit <= 0) {
       return res.status(400).json({ error: "invalid limit" });
     }
-    if (limitNum > MAX_TOP_PRODUCTS) {
+    if (rawLimit > MAX_TOP_PRODUCTS) {
       return res.status(400).json({ error: "limit exceeds max" });
     }
+    const limitNum = rawLimit;
     const dateRange = parseDateRange(startDate as string, endDate as string);
 
     const whereClause: Prisma.SaleWhereInput = {
@@ -175,8 +216,10 @@ export const getTopProducts = async (req: Request, res: Response) => {
       saleStatusDesc: "COMPLETED",
     };
 
-    if (channelId) whereClause.channelId = parseInt(channelId as string);
-    if (storeId) whereClause.storeId = parseInt(storeId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) whereClause.channelId = parsedChannelId;
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) whereClause.storeId = parsedStoreId;
 
     const topProducts = await prisma.productSale.groupBy({
       by: ["productId"],
@@ -234,7 +277,8 @@ export const getSalesByChannel = async (req: Request, res: Response) => {
       saleStatusDesc: "COMPLETED",
     };
 
-    if (storeId) whereClause.storeId = parseInt(storeId as string);
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) whereClause.storeId = parsedStoreId;
 
     const salesByChannel = await prisma.sale.groupBy({
       by: ["channelId"],
@@ -287,7 +331,8 @@ export const getSalesByStore = async (req: Request, res: Response) => {
       saleStatusDesc: "COMPLETED",
     };
 
-    if (channelId) whereClause.channelId = parseInt(channelId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) whereClause.channelId = parsedChannelId;
 
     const salesByStore = await prisma.sale.groupBy({
       by: ["storeId"],
@@ -340,8 +385,10 @@ export const getHourlyHeatmap = async (req: Request, res: Response) => {
       saleStatusDesc: "COMPLETED",
     };
 
-    if (channelId) whereClause.channelId = parseInt(channelId as string);
-    if (storeId) whereClause.storeId = parseInt(storeId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) whereClause.channelId = parsedChannelId;
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) whereClause.storeId = parsedStoreId;
 
     const sales = await prisma.sale.findMany({
       where: whereClause,
@@ -415,8 +462,10 @@ export const getTimeSeries = async (req: Request, res: Response) => {
       },
     };
 
-    if (channelId) whereClause.channelId = parseInt(channelId as string);
-    if (storeId) whereClause.storeId = parseInt(storeId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) whereClause.channelId = parsedChannelId;
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) whereClause.storeId = parsedStoreId;
 
     const sales = await prisma.sale.findMany({
       where: whereClause,
@@ -541,8 +590,10 @@ export const getCategories = async (req: Request, res: Response) => {
       saleStatusDesc: "COMPLETED",
     };
 
-    if (channelId) whereClause.channelId = parseInt(channelId as string);
-    if (storeId) whereClause.storeId = parseInt(storeId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) whereClause.channelId = parsedChannelId;
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) whereClause.storeId = parsedStoreId;
 
     const productSales = await prisma.productSale.findMany({
       where: {
@@ -597,10 +648,10 @@ export const getFilters = async (req: Request, res: Response) => {
     const { state, city } = q;
     const storeWhere: any = { isActive: true };
     if (state && typeof state === 'string') {
-      storeWhere.state = state.toUpperCase();
+      storeWhere.state = state.trim().toUpperCase();
     }
     if (city && typeof city === 'string') {
-      storeWhere.city = city;
+      storeWhere.city = city.trim();
     }
 
     const [channels, stores, categories] = await Promise.all([
@@ -656,12 +707,17 @@ export const getFilters = async (req: Request, res: Response) => {
 
 export const getCustomersAtRisk = async (req: Request, res: Response) => {
   try {
-    const minPurchases = Math.max(parseInt(String(req.query.minPurchases || '3')), 1);
-    const daysSince = Math.max(parseInt(String(req.query.daysSince || '30')), 1);
-    const limit = Math.max(parseInt(String(req.query.limit || '50')), 1);
-    if (limit > MAX_CUSTOMERS_AT_RISK) {
+    const minPurchases = clamp(parsePositiveInt(req.query.minPurchases, 3), 1, 50);
+    const daysSince = clamp(parsePositiveInt(req.query.daysSince, 30), 1, 365);
+
+    const rawLimit = Number(req.query.limit ?? 50);
+    if (!Number.isInteger(rawLimit) || rawLimit <= 0) {
+      return res.status(400).json({ error: "invalid limit" });
+    }
+    if (rawLimit > MAX_CUSTOMERS_AT_RISK) {
       return res.status(400).json({ error: "limit exceeds max" });
     }
+    const limit = rawLimit;
 
     const rows: any[] = await prisma.$queryRaw`
       SELECT c.id, COALESCE(c.customer_name, 'Desconhecido') AS name,
@@ -681,7 +737,7 @@ export const getCustomersAtRisk = async (req: Request, res: Response) => {
     return res.json(rows.map(r => ({
       customerId: r.id,
       name: r.name,
-      email: r.email,
+      email: maskEmail(String(r.email || "")),
       orders: Number(r.orders || 0),
       lastOrder: r.last_order,
       totalSpent: Number(r.total_spent || 0),
@@ -701,13 +757,14 @@ export const exportToCSV = async (req: Request, res: Response) => {
       storeId,
       limit = "1000",
     } = req.query;
-    const limitNum = parseInt(limit as string);
-    if (!Number.isFinite(limitNum) || limitNum <= 0) {
+    const rawLimit = Number(limit);
+    if (!Number.isInteger(rawLimit) || rawLimit <= 0) {
       return res.status(400).json({ error: "invalid limit" });
     }
-    if (limitNum > MAX_EXPORT_ROWS) {
+    if (rawLimit > MAX_EXPORT_ROWS) {
       return res.status(400).json({ error: "limit exceeds max" });
     }
+    const limitNum = rawLimit;
     const dateRange = parseDateRange(startDate as string, endDate as string);
 
     const whereClause: any = {
@@ -718,8 +775,10 @@ export const exportToCSV = async (req: Request, res: Response) => {
       saleStatusDesc: "COMPLETED",
     };
 
-    if (channelId) whereClause.channelId = parseInt(channelId as string);
-    if (storeId) whereClause.storeId = parseInt(storeId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) whereClause.channelId = parsedChannelId;
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) whereClause.storeId = parsedStoreId;
 
     const sales = await prisma.sale.findMany({
       where: whereClause,
@@ -782,11 +841,11 @@ export const exportToCSV = async (req: Request, res: Response) => {
           sale.id,
           dateStr,
           timeStr,
-          `"${normalizeChannelName(sale.channel?.name || "Unknown")}"`,
-          `"${sale.store?.name || "Unknown"}"`,
-          `"${sale.customerName || "Unknown"}"`,
-          `"${ps.product?.name || "Unknown"}"`,
-          `"${ps.product?.category?.name || "Unknown"}"`,
+          escapeCsvCell(normalizeChannelName(sale.channel?.name || "Unknown")),
+          escapeCsvCell(sale.store?.name || "Unknown"),
+          escapeCsvCell(sale.customerName || "Unknown"),
+          escapeCsvCell(ps.product?.name || "Unknown"),
+          escapeCsvCell(ps.product?.category?.name || "Unknown"),
           ps.quantity,
           ps.basePrice.toString(),
           ps.totalPrice.toString(),
@@ -817,8 +876,7 @@ export const exportToCSV = async (req: Request, res: Response) => {
 
 export const getDataQualitySummary = async (req: Request, res: Response) => {
   try {
-    const parsedDays = Number.parseInt(String(req.query?.days ?? "7"), 10);
-    const days = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 7;
+    const days = clamp(parsePositiveInt(req.query?.days, 7), 1, 90);
     const rows: any[] = await prisma.$queryRaw`
       WITH recent_sales AS (
         SELECT *
@@ -861,8 +919,7 @@ export const getDataQualitySummary = async (req: Request, res: Response) => {
 
 export const getDataQualityTrend = async (req: Request, res: Response) => {
   try {
-    const parsedDays = Number.parseInt(String(req.query?.days ?? "7"), 10);
-    const days = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 7;
+    const days = clamp(parsePositiveInt(req.query?.days, 7), 1, 90);
     const rows: any[] = await prisma.$queryRaw`
       WITH days AS (
         SELECT d::date AS date

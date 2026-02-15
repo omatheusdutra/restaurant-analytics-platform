@@ -56,6 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    apiClient.logout().catch(() => undefined);
     apiClient.setToken(null);
     set({ user: null, isAuthenticated: false, error: null });
   },
@@ -65,9 +66,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   initialize: async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
       const user = await apiClient.getProfile();
       set({ user, isAuthenticated: true });

@@ -2,6 +2,13 @@ import { Request, Response } from "express";
 import prisma from "../config/database";
 import { parseDateRange } from "./metricsController";
 
+function parseOptionalId(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+  return parsed;
+}
+
 export const getInsights = async (req: Request, res: Response) => {
   try {
     const { startDate, endDate, channelId, storeId } = req.query;
@@ -14,8 +21,10 @@ export const getInsights = async (req: Request, res: Response) => {
       },
     };
 
-    if (channelId) baseWhere.channelId = parseInt(channelId as string);
-    if (storeId) baseWhere.storeId = parseInt(storeId as string);
+    const parsedChannelId = parseOptionalId(channelId);
+    if (parsedChannelId) baseWhere.channelId = parsedChannelId;
+    const parsedStoreId = parseOptionalId(storeId);
+    if (parsedStoreId) baseWhere.storeId = parsedStoreId;
 
     const completedWhere = { ...baseWhere, saleStatusDesc: "COMPLETED" };
     const cancelledWhere = { ...baseWhere, saleStatusDesc: "CANCELLED" };
@@ -27,62 +36,47 @@ export const getInsights = async (req: Request, res: Response) => {
       timeDistribution,
       totalOrdersAll,
       cancelledOrders,
-    ] =
-      await Promise.all([
-        prisma.sale.aggregate({
-          where: completedWhere,
-          _sum: {
-            totalAmount: true,
-            totalAmountItems: true,
-            totalDiscount: true,
-          },
-          _count: {
-            id: true,
-          },
-          _avg: {
-            totalAmount: true,
-          },
-        }),
-        prisma.productSale.groupBy({
-          by: ["productId"],
-          where: {
-            sale: completedWhere,
-          },
-          _sum: {
-            quantity: true,
-            totalPrice: true,
-          },
-          orderBy: {
-            _sum: {
-              totalPrice: "desc",
-            },
-          },
-          take: 5,
-        }),
-        prisma.sale.groupBy({
-          by: ["channelId"],
-          where: completedWhere,
-          _sum: {
-            totalAmount: true,
-          },
-          _count: {
-            id: true,
-          },
-          orderBy: {
-            _sum: {
-              totalAmount: "desc",
-            },
-          },
-        }),
-        prisma.sale.findMany({
-          where: completedWhere,
-          select: {
-            createdAt: true,
-          },
-        }),
-        prisma.sale.count({ where: baseWhere }),
-        prisma.sale.count({ where: cancelledWhere }),
-      ]);
+    ] = await Promise.all([
+      prisma.sale.aggregate({
+        where: completedWhere,
+        _sum: {
+          totalAmount: true,
+          totalAmountItems: true,
+          totalDiscount: true,
+        },
+        _count: { id: true },
+        _avg: { totalAmount: true },
+      }),
+      prisma.productSale.groupBy({
+        by: ["productId"],
+        where: { sale: completedWhere },
+        _sum: {
+          quantity: true,
+          totalPrice: true,
+        },
+        orderBy: {
+          _sum: { totalPrice: "desc" },
+        },
+        take: 5,
+      }),
+      prisma.sale.groupBy({
+        by: ["channelId"],
+        where: completedWhere,
+        _sum: {
+          totalAmount: true,
+        },
+        _count: { id: true },
+        orderBy: {
+          _sum: { totalAmount: "desc" },
+        },
+      }),
+      prisma.sale.findMany({
+        where: completedWhere,
+        select: { createdAt: true },
+      }),
+      prisma.sale.count({ where: baseWhere }),
+      prisma.sale.count({ where: cancelledWhere }),
+    ]);
 
     const insights: any[] = [];
 
@@ -97,14 +91,14 @@ export const getInsights = async (req: Request, res: Response) => {
 
     insights.push({
       type: "summary",
-      icon: "📊",
-      title: "Visão Geral de Desempenho",
+      icon: "chart",
+      title: "Visao Geral de Desempenho",
       description: `Foram gerados ${totalOrders.toLocaleString()} pedidos totalizando R$ ${totalRevenue.toLocaleString(
         "pt-BR",
         { minimumFractionDigits: 2 }
-      )} com ticket médio de R$ ${avgTicket.toLocaleString("pt-BR", {
+      )} com ticket medio de R$ ${avgTicket.toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
-      })}. Desconto médio de ${(discountRate * 100).toFixed(1)}% e taxa de cancelamento de ${(cancellationRate * 100).toFixed(1)}%.`,
+      })}. Desconto medio de ${(discountRate * 100).toFixed(1)}% e taxa de cancelamento de ${(cancellationRate * 100).toFixed(1)}%.`,
       priority: "high",
     });
 
@@ -117,13 +111,13 @@ export const getInsights = async (req: Request, res: Response) => {
 
       insights.push({
         type: "top_product",
-        icon: "🏆",
+        icon: "trophy",
         title: "Produto Mais Vendido",
-        description: `"${productDetails?.name}" é seu produto estrela com ${
+        description: `"${productDetails?.name}" e o produto com melhor desempenho com ${
           topProduct._sum.quantity
-        } unidades vendidas, gerando R$ ${Number(
+        } unidades vendidas e R$ ${Number(
           topProduct._sum.totalPrice || 0
-        ).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} em receita.`,
+        ).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} de receita.`,
         priority: "high",
         data: {
           productName: productDetails?.name,
@@ -133,26 +127,24 @@ export const getInsights = async (req: Request, res: Response) => {
       });
     }
 
-    if (channelsData.length > 1) {
+    if (channelsData.length > 1 && totalRevenue > 0) {
       const topChannel = channelsData[0];
       const channelDetails = await prisma.channel.findUnique({
         where: { id: topChannel.channelId },
       });
 
-      /* istanbul ignore next */
       const channelPercentage = (
         (Number(topChannel._sum.totalAmount || 0) / totalRevenue) *
         100
       ).toFixed(1);
 
-      /* istanbul ignore next */
       insights.push({
         type: "channel_performance",
-        icon: "📱",
-        title: "Canal de Vendas Líder",
+        icon: "channel",
+        title: "Canal Lider",
         description: `${
           channelDetails?.name
-        } é seu canal líder, responsável por ${channelPercentage}% da receita total (R$ ${Number(
+        } responde por ${channelPercentage}% da receita do periodo (R$ ${Number(
           topChannel._sum.totalAmount || 0
         ).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}).`,
         priority: "high",
@@ -173,18 +165,16 @@ export const getInsights = async (req: Request, res: Response) => {
     const peakHours = Object.entries(hourDistribution)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
-      .map(([hour]) => parseInt(hour));
+      .map(([hour]) => parseInt(hour, 10));
 
     if (peakHours.length > 0) {
-      const peakHoursStr = peakHours
-        .map((h) => `${h}:00-${h + 1}:00`)
-        .join(", ");
+      const peakHoursStr = peakHours.map((h) => `${h}:00-${h + 1}:00`).join(", ");
 
       insights.push({
         type: "peak_hours",
-        icon: "⏰",
-        title: "Horários de Pico",
-        description: `Seus horários mais movimentados são ${peakHoursStr}. Considere otimizar alocação de pessoal e estoque durante esses períodos.`,
+        icon: "clock",
+        title: "Horarios de Pico",
+        description: `Os horarios com maior volume foram ${peakHoursStr}. Ajuste escala e preparo para reduzir gargalos.`,
         priority: "medium",
         data: {
           peakHours,
@@ -193,29 +183,24 @@ export const getInsights = async (req: Request, res: Response) => {
       });
     }
 
-    if (avgTicket > 0) {
-      const lowTicketThreshold = avgTicket * 0.7;
-      const highTicketThreshold = avgTicket * 1.3;
-
-      if (avgTicket < 50) {
-        insights.push({
-          type: "opportunity",
-          icon: "💡",
-          title: "Oportunidade de Upsell",
-          description: `Ticket médio é R$ ${avgTicket.toLocaleString("pt-BR", {
-            minimumFractionDigits: 2,
-          })}. Considere ofertas de combo ou produtos complementares para aumentar o valor do pedido.`,
-          priority: "medium",
-        });
-      }
+    if (avgTicket > 0 && avgTicket < 50) {
+      insights.push({
+        type: "opportunity",
+        icon: "idea",
+        title: "Oportunidade de Upsell",
+        description: `Ticket medio de R$ ${avgTicket.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        })}. Combine itens e ofertas para elevar o valor por pedido.`,
+        priority: "medium",
+      });
     }
 
     if (discountRate >= 0.2) {
       insights.push({
         type: "discount_pressure",
-        icon: "🏷️",
-        title: "Descontos Elevados",
-        description: `Taxa de desconto em ${(discountRate * 100).toFixed(1)}%. Avalie promoções e margens para evitar erosão de receita.`,
+        icon: "tag",
+        title: "Desconto Elevado",
+        description: `Taxa de desconto em ${(discountRate * 100).toFixed(1)}%. Revise politica promocional para proteger margem.`,
         priority: "medium",
       });
     }
@@ -223,56 +208,52 @@ export const getInsights = async (req: Request, res: Response) => {
     if (cancellationRate >= 0.08) {
       insights.push({
         type: "cancellation_risk",
-        icon: "❌",
-        title: "Cancelamentos Acima do Ideal",
-        description: `Taxa de cancelamento em ${(cancellationRate * 100).toFixed(1)}%. Investigue atrasos e gargalos de operação.`,
+        icon: "warning",
+        title: "Cancelamento Acima do Ideal",
+        description: `Taxa de cancelamento em ${(cancellationRate * 100).toFixed(1)}%. Investigue atrasos e indisponibilidade de itens.`,
         priority: "high",
       });
     }
 
     if (totalOrders > 100) {
-      const daysInPeriod = Math.ceil(
-        (dateRange.end.getTime() - dateRange.start.getTime()) /
-          (1000 * 60 * 60 * 24)
+      const daysInPeriod = Math.max(
+        1,
+        Math.ceil(
+          (dateRange.end.getTime() - dateRange.start.getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
       );
       const ordersPerDay = totalOrders / daysInPeriod;
 
       insights.push({
         type: "growth",
-        icon: "📈",
+        icon: "growth",
         title: "Volume de Vendas",
-        description: `Média de ${ordersPerDay.toFixed(1)} pedidos por dia. ${
-          ordersPerDay > 50
-            ? "Excelente velocidade de vendas!"
-            : ordersPerDay > 20
-            ? "Bom desempenho constante."
-            : "Considere iniciativas de marketing para aumentar as vendas."
-        }`,
+        description: `Media de ${ordersPerDay.toFixed(1)} pedidos por dia no periodo analisado.`,
         priority: "low",
       });
     }
 
-    /* istanbul ignore next */
-    if (topProducts.length >= 3) {
+    if (topProducts.length >= 3 && totalRevenue > 0) {
       const top3Revenue = topProducts
         .slice(0, 3)
-        /* istanbul ignore next */
         .reduce((sum, p) => sum + Number(p._sum.totalPrice || 0), 0);
-      const top3Percentage = ((top3Revenue / totalRevenue) * 100).toFixed(1);
+      const top3Percentage = (top3Revenue / totalRevenue) * 100;
 
-      /* istanbul ignore next */
-      if (parseFloat(top3Percentage) > 60) {
+      if (top3Percentage > 60) {
         insights.push({
           type: "risk",
-          icon: "⚠️",
-          title: "Concentração de Receita",
-          description: `Os 3 principais produtos representam ${top3Percentage}% da receita. Considere diversificar seu mix de produtos para reduzir a dependência.`,
+          icon: "risk",
+          title: "Concentracao de Receita",
+          description: `Os 3 principais produtos concentram ${top3Percentage.toFixed(
+            1
+          )}% da receita. Avalie diversificacao de mix.`,
           priority: "medium",
         });
       }
     }
 
-    res.json({
+    return res.json({
       insights,
       generatedAt: new Date().toISOString(),
       period: {
@@ -282,6 +263,6 @@ export const getInsights = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Insights generation error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };

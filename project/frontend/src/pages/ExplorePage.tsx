@@ -87,13 +87,9 @@ export const ExplorePage: React.FC = () => {
   });
   const { data: availableFilters } = useQuery<Filters>({ queryKey: ["filters"], queryFn: () => apiClient.getFilters(), staleTime: 300000 });
 
-  const getHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-  };
+  const getHeaders = () => ({
+    'Content-Type': 'application/json',
+  });
 
   const buildPayload = (targetPage: number, requestedPageSize: number = pageSize) => {
     const payload: any = {
@@ -145,7 +141,8 @@ export const ExplorePage: React.FC = () => {
       const res = await fetch(`${API_URL}/api/explore/query`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include',
       });
 
       const data = await res.json().catch(() => []);
@@ -187,7 +184,8 @@ export const ExplorePage: React.FC = () => {
     const res = await fetch(`${API_URL}/api/explore/query?format=csv`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      credentials: 'include',
     });
 
     if (typeof res.ok === 'boolean' && !res.ok) {

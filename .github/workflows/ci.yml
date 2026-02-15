@@ -11,17 +11,18 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql://nextage:alan_zoka@localhost:5432/nextage_db
+      DATABASE_URL: postgresql://nextage:test_password@localhost:5432/nextage_db
       JWT_SECRET: test-secret
       CORS_ORIGIN: http://localhost:3000
       NODE_ENV: test
+      RUN_INTEGRATION: "1"
     services:
       postgres:
         image: postgres:15
         env:
           POSTGRES_DB: nextage_db
           POSTGRES_USER: nextage
-          POSTGRES_PASSWORD: alan_zoka
+          POSTGRES_PASSWORD: test_password
         ports:
           - 5432:5432
         options: >-
@@ -116,7 +117,7 @@ jobs:
         env:
           POSTGRES_DB: nextage_db
           POSTGRES_USER: nextage
-          POSTGRES_PASSWORD: alan_zoka
+          POSTGRES_PASSWORD: test_password
         ports:
           - 5432:5432
         options: >-
@@ -136,7 +137,7 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
           PGUSER: nextage
-          PGPASSWORD: alan_zoka
+          PGPASSWORD: test_password
           PGDATABASE: nextage_db
         run: |
           for i in {1..20}; do
@@ -150,7 +151,7 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
           PGUSER: nextage
-          PGPASSWORD: alan_zoka
+          PGPASSWORD: test_password
           PGDATABASE: nextage_db
         run: psql -v ON_ERROR_STOP=1 -f project/db/database-schema.sql
 
@@ -159,7 +160,7 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
           PGUSER: nextage
-          PGPASSWORD: alan_zoka
+          PGPASSWORD: test_password
           PGDATABASE: nextage_db
         run: psql -v ON_ERROR_STOP=1 -f scripts/analytics_views.sql
 
@@ -181,7 +182,7 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: nextage
-          DB_PASSWORD: alan_zoka
+          DB_PASSWORD: test_password
           DB_NAME: nextage_db
           DBT_SCHEMA: analytics_dbt
         run: |
@@ -195,7 +196,7 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
           PGUSER: nextage
-          PGPASSWORD: alan_zoka
+          PGPASSWORD: test_password
           PGDATABASE: nextage_db
         run: psql -v ON_ERROR_STOP=1 -f scripts/data_quality.sql
 
@@ -204,7 +205,7 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
           PGUSER: nextage
-          PGPASSWORD: alan_zoka
+          PGPASSWORD: test_password
           PGDATABASE: nextage_db
         run: psql -v ON_ERROR_STOP=1 -f scripts/contracts.sql
 

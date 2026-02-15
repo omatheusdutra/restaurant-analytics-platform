@@ -37,6 +37,12 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 
+function escapeCsvCell(value: unknown): string {
+  const str = String(value ?? "").replace(/"/g, '""');
+  if (/^[=+\-@]/.test(str)) return `"'${str}"`;
+  return `"${str}"`;
+}
+
 function pick<T>(obj: Record<string, T>, key?: string): T | undefined {
   if (!key) return undefined;
   return obj[key];
@@ -274,7 +280,7 @@ export const runExploreQuery = async (req: Request, res: Response) => {
         .concat(
           safeRows.map((r) => {
             const base = [new Date(r.ts).toISOString()];
-            if (catDimSql) base.push(`"${(r.dim ?? "").replaceAll('"', '\\"')}"`);
+            if (catDimSql) base.push(escapeCsvCell(r.dim ?? ""));
             for (const a of aliases) base.push(String(r[a] ?? 0));
             return base.join(",");
           })

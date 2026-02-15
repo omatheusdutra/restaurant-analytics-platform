@@ -47,3 +47,8 @@ patch.txt
 temp_fix_insights_nav.ps1
 temp_line.txt
 
+
+# Backup files
+*.bak
+
+.codex_tmp_write_test.txt
