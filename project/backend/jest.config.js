@@ -1,4 +1,4 @@
-﻿const strictCoverage = process.env.RUN_INTEGRATION === '1';
+﻿const strictCoverage = process.env.STRICT_COVERAGE === '1';
 
 module.exports = {
   preset: 'ts-jest',
