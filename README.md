@@ -1,4 +1,4 @@
-﻿# 🍽️📊 Restaurant Analytics
+# 🍽️📊 Restaurant Analytics
 
 [![Node.js](https://img.shields.io/badge/node-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/frontend-React%2018-61DAFB?logo=react&logoColor=111827)](https://react.dev/)
@@ -24,7 +24,7 @@
   - [🧭 Sumário](#-sumário)
   - [📌 Visão Geral](#-visão-geral)
   - [🌎 English Summary](#-english-summary)
-  - [🚀 Deploy (Vercel + Render)](#deploy-vercel--render)
+  - [🚀 Deploy (Vercel + Render)](#-deploy-vercel--render)
   - [🖼️ Screenshots](#️-screenshots)
     - [Dashboard, Qualidade de Dados e Insights](#dashboard-qualidade-de-dados-e-insights)
     - [Explorar Dados](#explorar-dados)
@@ -33,7 +33,6 @@
     - [Frontend](#frontend)
     - [Data / Plataforma](#data--plataforma)
   - [🏗️ Arquitetura](#️-arquitetura)
-  - [🆕 O que foi alterado recentemente](#-o-que-foi-alterado-recentemente)
   - [⚡ Quickstart Completo](#-quickstart-completo)
     - [1) Clonar e entrar na raiz 📂](#1-clonar-e-entrar-na-raiz-)
     - [2) Criar arquivos `.env` 🔐](#2-criar-arquivos-env-)
@@ -60,6 +59,7 @@
     - [2) `psql` não encontrado](#2-psql-não-encontrado)
     - [3) Frontend sem dados](#3-frontend-sem-dados)
     - [4) Home sem recarregar dados](#4-home-sem-recarregar-dados)
+  - [👤 Autor](#-autor)
   - [📄 License](#-license)
 
 ---
@@ -191,7 +191,6 @@ Notas:
 - Carga de dados: gerador sintetico via perfil `tools`.
 ---
 
-## 🆕 O que foi alterado recentemente
 
 - Banco padronizado para:
   - DB: `nextage_db`
@@ -557,8 +556,14 @@ Botao `Inicio` invalida cache de dashboard. Se necessário, force refresh (`Ctrl
 
 ---
 
+## 👤 Autor
+
+- Matheus Dutra 
+- Engenheiro de Software | Full Stack, Cloud e Dados
+
 ## 📄 License
 
 MIT
+
 
 
